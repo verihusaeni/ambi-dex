@@ -9,7 +9,7 @@
 ![Vanilla JS](https://img.shields.io/badge/vanilla-JS_100%25-57f6c8?style=for-the-badge&labelColor=04090b)
 ![License](https://img.shields.io/badge/license-All_Rights_Reserved-ff4d5e?style=for-the-badge&labelColor=04090b)
 
-[▶️ **MAIN SEKARANG**](#-cara-memulai) · [🎮 Kontrol](#-kontrol) · [⚔️ Kesulitan](#-tingkat-kesulitan) · [🛠️ Teknologi](#️-teknologi)
+[▶️ **MAIN SEKARANG**](#-cara-memulai) · [🎮 Kontrol](#-kontrol) · [⚔️ Kesulitan](#-tingkat-kesulitan) · [🛠️ Teknologi](#️-teknologi) [▶️ **MAIN ONLINE**](<a href="https://verihusaeni.github.io/ambi-dex">PLAY</a>)
 
 </div>
 
