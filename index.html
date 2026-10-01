@@ -60,12 +60,13 @@ body.playing .btn,body.playing .abtn,body.playing .switch{cursor:pointer}
 #hEmpL{font-size:10px;letter-spacing:.2em;color:var(--dim);display:block;margin-top:3px}
 #hWave{position:absolute;top:16px;left:50%;transform:translateX(-50%);text-align:center;max-width:60vw}
 #hWaveTxt{font-family:var(--disp);font-size:15px;letter-spacing:.35em;font-weight:700}
+#hWaveTxt.heat{color:var(--amber);text-shadow:0 0 12px rgba(255,176,77,.5)}
 #hStormTxt{font-size:10px;letter-spacing:.22em;color:var(--dim);margin-top:4px}
 #hStormBar{width:160px;height:3px;background:rgba(87,246,200,.12);margin:5px auto 0}
 #hHint{position:absolute;bottom:19px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.26em;color:rgba(127,181,168,.5);white-space:nowrap}
 
 /* ============ KEYSTORM ============ */
-#storm{position:fixed;left:50%;top:36%;transform:translate(-50%,-50%);z-index:15;text-align:center;pointer-events:none}
+#storm{position:fixed;left:50%;top:36%;transform:translateX(-50%);z-index:15;text-align:center;pointer-events:none}
 .s-head{font-family:var(--disp);font-size:13px;letter-spacing:.55em;color:var(--amber);margin-bottom:12px}
 #stormChar{font-family:var(--disp);font-weight:900;font-size:96px;color:#fff;width:152px;height:152px;line-height:148px;
   margin:0 auto;border:2px solid var(--amber);background:rgba(32,17,4,.65)}
@@ -328,13 +329,14 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
       <div class="ctrl-row">
         <div class="ctrl-ic"><svg viewBox="0 0 34 22" width="30" height="20"><rect x="1" y="1" width="32" height="20" rx="2.5" fill="rgba(87,246,200,.06)" stroke="currentColor"/><g fill="rgba(87,246,200,.35)"><rect x="4" y="4.5" width="4" height="3.4"/><rect x="9.5" y="4.5" width="4" height="3.4"/><rect x="20.5" y="4.5" width="4" height="3.4"/><rect x="26" y="4.5" width="4" height="3.4"/><rect x="4" y="9.5" width="4" height="3.4"/><rect x="9.5" y="9.5" width="4" height="3.4"/><rect x="20.5" y="9.5" width="4" height="3.4"/><rect x="26" y="9.5" width="4" height="3.4"/><rect x="8" y="14.5" width="18" height="3.4"/></g><rect x="15" y="9.5" width="4" height="3.4" fill="#ffb04d"/></svg></div>
         <div class="ctrl-name">KEYBOARD</div>
-        <div class="ctrl-desc">Ketik <b>kode</b> musuh kristal sampai selesai — dan kuasai <b>KEYSTORM</b>.</div>
+        <div class="ctrl-desc">Ketik <b>kode</b> musuh kristal kata demi kata — dan kuasai <b>KEYSTORM</b>.</div>
       </div>
     </div>
     <div class="brief-tips">
-      <p>&#9656; Drone bergaris perisai hanya runtuh oleh <b>EMP</b>. Kristal kode tidak bisa ditembak — ketik kata di panel <b>UPLINK KODE</b> sebelum ia lolos ke bawah.</p>
+      <p>&#9656; Drone bergaris perisai hanya runtuh oleh <b>EMP</b>. Kristal kode tidak bisa ditembak — ketik semua kata di panel <b>UPLINK KODE</b> sebelum ia lolos ke bawah. Kata aktif ditandai putih.</p>
       <p>&#9656; Sesekali <b>KEYSTORM</b> meledak: ketik huruf yang muncul secepat mungkin untuk bonus besar dan perbaikan hull.</p>
       <p>&#9656; Musuh yang <b>lolos melewati garis pertahanan</b> di bawah layar memotong 1 hull — perhatikan kilat merah di garis. Beberapa musuh yang lolos bersamaan hanya dihitung sekali per detik.</p>
+      <p>&#9656; <b>Eskalasi gelombang:</b> semakin lama misi berjalan, musuh makin cepat, makin rapat, gerakannya makin liar, dan musuh kode membawa makin banyak kata — <b>2, 3, hingga 4 kata sekaligus</b>. Hancurkan dengan cepat sebelum gelombang memuncak!</p>
     </div>
     <div class="p-actions">
       <button class="btn primary" id="btnLaunch">LAUNCH &#9656;</button>
@@ -405,7 +407,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
 <script>
 'use strict';
 /* =====================================================================
-   AMBIDEX — Pelatih sinkronisasi mouse & keyboard (v1.3 FINAL)
+   AMBIDEX — Pelatih sinkronisasi mouse & keyboard (v1.4)
    Arsitektur: state machine + canvas 2D + Web Audio (tanpa aset eksternal)
 
    Riwayat versi:
@@ -414,14 +416,22 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
    v1.2 — Presisi viewport: spawn adaptif, amplitudo gerak adaptif,
           re-clamp semua entitas saat resize, teks/panel selalu muat,
           footer kredit di halaman awal.
-   v1.3 — Responsivitas penuh semua layar (FINAL):
-          • Jaring pengaman per-frame: enforceBounds() menjamin TIDAK ADA
-            musuh/power-up di luar layar pada kondisi apa pun
-          • Mengikuti visualViewport (URL bar mobile, zoom, orientasi)
-          • UI responsif: HUD/panel/typography menyesuaikan semua ukuran
-          • Semua layar menu bisa di-scroll bila konten lebih tinggi
-            dari viewport (teknik auto-margin flex)
-          • Peringatan otomatis pada perangkat touch-only
+   v1.3 — Responsivitas penuh semua layar: jaring pengaman per-frame
+          (enforceBounds), visualViewport, UI responsif, menu scrollable.
+   v1.4 — WAVE ESCALATION (eskalasi gelombang, berlaku SEMUA kesulitan):
+          • Kecepatan musuh naik signifikan per wave (dengan cap wajar)
+          • Amplitudo & frekuensi gerak sinus naik per wave — drone
+            mulai zigzag vertikal di wave 4+
+          • Interval spawn makin rapat (0.94^wave, min 0.35)
+          • Musuh kode (breaker) makin banyak: 1 → 2 → 3 → 4 → 5 aktif
+          • Breaker membawa MULTI-KATA: 1 → 2 → 3 → 4 kata sekaligus
+            (interval pertumbuhan per kesulitan: cadet 4 wave, pilot &
+            veteran 3 wave, ace 2 wave)
+          • Panel UPLINK & label kode di atas musuh mendukung multi-kata
+            (kata aktif putih, selesai mint, belum amber) + indikator
+            KATA n/N + auto-shrink agar selalu muat di layar
+          • Skor breaker memperhitungkan total huruf + bonus multi-kata
+          • Toast milestone saat batas baru tercapai
    ===================================================================== */
 
 // ---------- UTIL ----------
@@ -439,11 +449,13 @@ const store = {
 };
 
 // ---------- PENGATURAN & KESULITAN ----------
+// wInt   : tiap berapa wave, breaker bertambah 1 kata
+// maxBrk : batas maksimum breaker aktif bersamaan (juga tumbuh per wave)
 const DIFFS = {
-  cadet:   { name:'KADET',     tag:'ANAK-ANAK · 6+',    desc:'Musuh lambat, kata 3–4 huruf, musuh tidak menembak, salah ketik diabaikan.', spd:.6,  spawn:1.7, word:[3,4], hp:.75, lives:5, shoot:false, empCd:3.5, storm:32, lenient:true  },
-  pilot:   { name:'PILOT',     tag:'SANTAI · REMAJA',   desc:'Ritme sedang, kata 3–5 huruf, masih ramah untuk pemula.',                     spd:.85, spawn:1.2, word:[3,5], hp:1,   lives:4, shoot:false, empCd:5,   storm:40, lenient:true  },
-  veteran: { name:'VETERAN',   tag:'DEWASA · STANDAR',  desc:'Musuh menembak, kata 4–7 huruf, salah ketik mengulang dari awal.',            spd:1.05,spawn:.95, word:[4,7], hp:1.2, lives:3, shoot:true,  empCd:6,   storm:46, lenient:false },
-  ace:     { name:'ACE ELIT',  tag:'DEWASA · BRUTAL',   desc:'Serangan rapat, kata 5–9 huruf, refleks dan typing diuji tuntas.',            spd:1.3, spawn:.7,  word:[5,9], hp:1.45,lives:3, shoot:true,  empCd:7,   storm:52, lenient:false }
+  cadet:   { name:'KADET',     tag:'ANAK-ANAK · 6+',    desc:'Musuh lambat, kata 3–4 huruf, musuh tidak menembak, salah ketik diabaikan.', spd:.6,  spawn:1.7, word:[3,4], hp:.75, lives:5, shoot:false, empCd:3.5, storm:32, lenient:true,  wInt:4, maxBrk:3 },
+  pilot:   { name:'PILOT',     tag:'SANTAI · REMAJA',   desc:'Ritme sedang, kata 3–5 huruf, masih ramah untuk pemula.',                     spd:.85, spawn:1.2, word:[3,5], hp:1,   lives:4, shoot:false, empCd:5,   storm:40, lenient:true,  wInt:3, maxBrk:3 },
+  veteran: { name:'VETERAN',   tag:'DEWASA · STANDAR',  desc:'Musuh menembak, kata 4–7 huruf, salah ketik mengulang dari awal.',            spd:1.05,spawn:.95, word:[4,7], hp:1.2, lives:3, shoot:true,  empCd:6,   storm:46, lenient:false, wInt:3, maxBrk:4 },
+  ace:     { name:'ACE ELIT',  tag:'DEWASA · BRUTAL',   desc:'Serangan rapat, kata 5–9 huruf, refleks dan typing diuji tuntas.',            spd:1.3, spawn:.7,  word:[5,9], hp:1.45,lives:3, shoot:true,  empCd:7,   storm:52, lenient:false, wInt:2, maxBrk:5 }
 };
 let settings = Object.assign({ diff:'pilot', music:.7, sfx:.9, shake:true, muteM:false, muteS:false }, store.get('settings', {}));
 store.set('settings', settings);
@@ -469,8 +481,6 @@ function resize() {
   cv.style.width = W + 'px'; cv.style.height = H + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   makeStars();
-  // PREISI: jika viewport berubah di tengah permainan, paksa semua entitas
-  // kembali ke dalam layar — tidak ada musuh/power-up yang tertinggal di luar
   for (const e of enemies) e.x = clampEX(e.x);
   for (const p of pups) p.x = clampEX(p.x);
   for (const m of breachMarks) m.x = clampEX(m.x);
@@ -485,7 +495,6 @@ function makeStars() {
   for (let i = 0; i < n; i++) stars.push({ x: Math.random() * W, y: Math.random() * H, z: rand(.25, 1), tw: rand(0, TAU) });
 }
 addEventListener('resize', resize);
-// PREISI: mobile — URL bar muncul/hilang & rotasi layar memicu visualViewport
 if (window.visualViewport) visualViewport.addEventListener('resize', resize);
 
 // ---------- AUDIO (semua suara disintesis) ----------
@@ -560,11 +569,15 @@ const SFX = {
     AU.noise({ d:.35, v:.2, f0:400, f1:3000, type:'bandpass', q:1 });
   },
   keyOK(n)   { AU.tone({ w:'square', f0: 520 * Math.pow(2, (n % 10) / 12), f1: 700 * Math.pow(2, (n % 10) / 12), d:.05, v:.11 }); },
+  // v1.4: suara khusus "satu kata selesai, lanjut kata berikutnya"
+  wordDone() {
+    AU.tone({ w:'square', f0:660, f1:990, d:.08, v:.13 });
+    AU.tone({ w:'square', f0:990, f1:1320, d:.11, v:.12, at: AU.ready ? AU.ctx.currentTime + .07 : 0 });
+  },
   keyErr()   { AU.tone({ w:'square', f0:130, f1:88, d:.15, v:.18 }); AU.tone({ w:'square', f0:123, f1:84, d:.15, v:.13, at: AU.ready ? AU.ctx.currentTime + .02 : 0 }); },
   pickup()   { AU.tone({ w:'sine', f0:520, f1:880, d:.12, v:.18 }); AU.tone({ w:'sine', f0:780, f1:1320, d:.14, v:.16, at: AU.ready ? AU.ctx.currentTime + .09 : 0 }); },
   shieldHit(){ AU.tone({ w:'sine', f0:900, f1:300, d:.15, v:.22 }); AU.noise({ d:.12, v:.13, f0:2200, f1:500 }); },
   hurt()     { AU.tone({ w:'sawtooth', f0:220, f1:50, d:.32, v:.38 }); AU.noise({ d:.25, v:.22, f0:900, f1:120 }); },
-  // SFX khusus pelanggaran garis: klakson dua nada — jelas berbeda dari hit biasa
   breach() {
     if (!AU.ready) return;
     const t = AU.ctx.currentTime;
@@ -595,7 +608,7 @@ const MUSIC = {
   },
   sched() {
     const c = AU.ctx; if (!c) return;
-    if (this.next < c.currentTime - .3) this.next = c.currentTime + .05; // anti tumpukan saat tab hidden
+    if (this.next < c.currentTime - .3) this.next = c.currentTime + .05;
     while (this.next < c.currentTime + .16) {
       this.playStep(this.next, this.step);
       this.step = (this.step + 1) % 64;
@@ -604,7 +617,7 @@ const MUSIC = {
   },
   playStep(t, s) {
     const bar = Math.floor(s / 16), st = s % 16;
-    const root = [55, 43.65, 65.41, 49][bar]; // A1 F1 C2 G1
+    const root = [55, 43.65, 65.41, 49][bar];
     if (st % 4 === 0) this.kick(t);
     if (st === 4 || st === 12) AU.noise({ at:t, d:.16, v:.18, f0:1600, type:'bandpass', q:1, dest:AU.mus });
     if (st % 2 === 1) AU.noise({ at:t, d:.04, v:(st % 4 === 3 ? .07 : .045) * (0.5 + this.int * .8), f0:8000, type:'highpass', dest:AU.mus });
@@ -655,7 +668,6 @@ const MUSIC = {
   }
 };
 
-// Boot audio pada interaksi pertama (kebijakan autoplay browser)
 function bootAudio() {
   AU.init();
   if (AU.ready && AU.ctx.state === 'suspended') AU.ctx.resume();
@@ -665,7 +677,7 @@ addEventListener('pointerdown', bootAudio, { once: true });
 addEventListener('keydown', bootAudio, { once: true });
 
 // ---------- STATE GLOBAL ----------
-const G = { state:'title', bgT:0, time:0, wave:1, waveT:0, score:0, combo:1, comboT:0, spawnT:1.2, stormT:40, shakeAmp:0, deadT:0, breachGraceT:0 };
+const G = { state:'title', bgT:0, time:0, wave:1, waveT:0, score:0, combo:1, comboT:0, spawnT:1.2, stormT:40, shakeAmp:0, deadT:0, breachGraceT:0, lastWordCount:1, lastMaxBrk:1 };
 const player = { x:0, y:0, hull:3, maxHull:3, shield:0, weapon:0, fireT:0, empT:0, inv:0, od:0, alive:false, tilt:0 };
 let enemies = [], bullets = [], ebullets = [], parts = [], floats = [], pups = [], breachMarks = [];
 let stats = { shots:0, hits:0, keys:0, keysErr:0, maxCombo:1, time:0 };
@@ -702,6 +714,27 @@ function pickWord() {
   return s;
 }
 
+// ---------- WAVE ESCALATION (v1.4) ----------
+// Jumlah kata per breaker pada wave tertentu — tumbuh berdasar `wInt` kesulitan,
+// cap 4 kata agar tetap bisa dimainkan manusia :)
+function wordCountForWave(w) {
+  return Math.min(4, 1 + Math.floor((w - 1) / diff.wInt));
+}
+// Dengan sedikit variasi: 35% peluang satu level di bawah puncak agar tidak monoton
+function breakerWordCount() {
+  const base = wordCountForWave(G.wave);
+  return (base > 1 && Math.random() < .35) ? base - 1 : base;
+}
+// Batas breaker aktif — tumbuh tiap 3 wave, dibatasi kesulitan
+function maxBreakersForWave(w) {
+  return Math.min(diff.maxBrk, 1 + Math.floor((w - 1) / 3));
+}
+function pickWords(n) {
+  const arr = [];
+  for (let i = 0; i < n; i++) arr.push(pickWord());
+  return arr;
+}
+
 // ---------- INPUT ----------
 addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
 addEventListener('mousedown', e => {
@@ -736,15 +769,26 @@ function onLetter(ch) {
 }
 function getBreakerTarget() {
   let t = null;
-  for (const e of enemies) if (e.type === 'breaker' && e.shielded && e.word) { if (!t || e.y > t.y) t = e; }
+  for (const e of enemies) if (e.type === 'breaker' && e.shielded && e.words) { if (!t || e.y > t.y) t = e; }
   return t;
 }
+// v1.4: mengetik multi-kata — kata aktif harus diselesaikan dulu, lalu otomatis
+// pindah ke kata berikutnya. Salah ketik mengulang kata aktif (bukan semua kata).
 function breakerType(b, ch) {
   stats.keys++;
-  if (ch === b.word[b.typed]) {
+  const cur = b.words[b.wIdx];
+  if (ch === cur[b.typed]) {
     b.typed++; SFX.keyOK(b.typed);
     sparks(b.x, b.y, '#57f6c8', 3, 90);
-    if (b.typed >= b.word.length) codeKill(b);
+    if (b.typed >= cur.length) {
+      if (b.wIdx >= b.words.length - 1) {
+        codeKill(b);
+      } else {
+        b.wIdx++; b.typed = 0;
+        SFX.wordDone();
+        floats.push({ x: safeX(b.x, 50), y: Math.max(30, b.y - 26), txt: 'KATA ' + b.wIdx + '/' + b.words.length, life: .8, maxLife: .8, clr: '#a8ffe9', size: 13 });
+      }
+    }
   } else {
     stats.keysErr++; b.errT = .3; SFX.keyErr();
     if (!diff.lenient) b.typed = 0;
@@ -793,13 +837,16 @@ function updateStormDom() {
   $('stormBarI').style.transform = 'scaleX(' + clamp(storm.t / storm.dur, 0, 1) + ')';
 }
 
-// ---------- SPAWN MUSUH (selama di dalam viewport) ----------
+// ---------- SPAWN MUSUH (v1.4: pakai kurva eskalasi wave) ----------
 function spawnOne() {
   const nBrk = enemies.reduce((a, e) => a + (e.type === 'breaker' ? 1 : 0), 0);
   const nTank = enemies.reduce((a, e) => a + (e.type === 'tank' ? 1 : 0), 0);
-  const w = G.wave, spdM = diff.spd * (1 + (w - 1) * .06);
-  const maxBrk = (settings.diff === 'veteran' || settings.diff === 'ace') ? 2 : 1;
-  const pBrk = (w >= 2 && nBrk < maxBrk) ? Math.min(.16, .02 + w * .026) : 0;
+  const w = G.wave;
+  // ESKALASI: kecepatan naik 9% per wave (cap 2.6x dari baseline)
+  const spdM = diff.spd * (1 + Math.min(1.6, (w - 1) * .09));
+  const maxBrk = maxBreakersForWave(w);
+  // ESKALASI: peluang breaker naik per wave (cap 30%)
+  const pBrk = (w >= 2 && nBrk < maxBrk) ? Math.min(.3, .02 + w * .035) : 0;
   const pTank = nTank < 3 ? Math.min(.16, .03 + w * .016) : 0;
   const pSwm = Math.min(.3, .07 + w * .03);
   const r = Math.random();
@@ -807,16 +854,17 @@ function spawnOne() {
   if (r < pBrk) type = 'breaker';
   else if (r < pBrk + pTank) type = 'tank';
   else if (r < pBrk + pTank + pSwm) type = 'swarm';
-  // PREISI: margin spawn adaptif — musuh selalu lahir DI DALAM lebar layar
   const m = Math.min(60, Math.max(24, W * .08));
   const e = { id:++eid, type, x: rand(m, Math.max(m + 1, W - m)), y:-46, t:0, phase:rand(0,TAU), stun:0, flash:0, errT:0,
-              shielded:false, word:'', typed:0, shootT:rand(2,3.5), spd:100, r:16, cr:13, hp:2, score:100 };
-  // r  = radius untuk hit peluru (agak besar agar memuaskan ditembak)
-  // cr = radius untuk tabrakan dengan pemain (sesuai ukuran visual)
+              shielded:false, words:null, wIdx:0, typed:0, shootT:rand(2,3.5), spd:100, r:16, cr:13, hp:2, score:100 };
   if (type === 'drone')       { e.spd = rand(70,100) * spdM;  e.r = 17; e.cr = 13; e.hp = Math.ceil(2 * diff.hp); e.score = 100; }
   else if (type === 'swarm')  { e.spd = rand(115,150) * spdM; e.r = 12; e.cr = 9;  e.hp = 1; e.score = 60; }
   else if (type === 'tank')   { e.spd = rand(36,50) * spdM;   e.r = 30; e.cr = 24; e.hp = Math.ceil(8 * diff.hp); e.score = 250; e.shielded = true; }
-  else                        { e.spd = rand(44,58) * spdM;   e.r = 22; e.cr = 17; e.hp = 2; e.score = 400; e.shielded = true; e.word = pickWord(); e.typed = 0; }
+  else {
+    e.spd = rand(44,58) * spdM; e.r = 22; e.cr = 17; e.hp = 2; e.score = 400; e.shielded = true;
+    // ESKALASI: breaker membawa 1–4 kata sesuai wave saat ini
+    e.words = pickWords(breakerWordCount());
+  }
   enemies.push(e);
 }
 
@@ -838,7 +886,7 @@ function doEMP() {
     if (d < R + e.r) {
       if (e.shielded) {
         e.shielded = false;
-        if (e.type === 'breaker') { e.word = ''; e.typed = 0; floats.push({ x:e.x, y:e.y-20, txt:'PERISAI PECAH', life:1, maxLife:1, clr:'#ffd166', size:13 }); }
+        if (e.type === 'breaker') { e.words = null; e.wIdx = 0; e.typed = 0; floats.push({ x:e.x, y:e.y-20, txt:'PERISAI PECAH', life:1, maxLife:1, clr:'#ffd166', size:13 }); }
       }
       e.hp -= 3; e.stun = .9; e.flash = .1;
       if (e.hp <= 0) killEnemy(i);
@@ -885,16 +933,16 @@ function codeKill(e) {
   const i = enemies.indexOf(e); if (i >= 0) enemies.splice(i, 1);
   explosion(e.x, e.y, '#57f6c8', 30, true);
   SFX.boom(true); SFX.pickup(); shake(5);
-  const sc = Math.round((400 + e.word.length * 25) * G.combo);
+  // ESKALASI v1.4: skor memperhitungkan total huruf semua kata + bonus multi-kata
+  const totalLetters = e.words.reduce((a, w) => a + w.length, 0);
+  const sc = Math.round((400 + totalLetters * 25 + (e.words.length - 1) * 150) * G.combo);
   addScore(sc);
   floats.push({ x:e.x, y:e.y-14, txt:'KODE PECAH +' + fmt(sc), life:1.1, maxLife:1.1, clr:'#57f6c8', size:16 });
   G.combo = Math.min(8, G.combo + 1); G.comboT = 2.6;
   if (G.combo > stats.maxCombo) stats.maxCombo = G.combo;
-  player.empT = 0; // imbalan: EMP langsung siap kembali
+  player.empT = 0;
   if (Math.random() < .4 && player.alive) spawnPup(e.x, e.y);
 }
-// Musuh lolos ke garis pertahanan: penalti 1 hull, dengan grace window 1 detik
-// agar beberapa musuh yang lolos serentak tidak menumpuk penalti sekaligus.
 function onLeak(e) {
   if (!player.alive) return;
   breachMarks.push({ x: safeX(e.x, 70), t: 1.1 });
@@ -968,7 +1016,6 @@ function updateFloats(dt) {
     if (f.life <= 0) floats.splice(i, 1);
   }
 }
-// grace window + peluruhan tanda kebocoran di garis pertahanan
 function updateBreachFx(dt) {
   G.breachGraceT = Math.max(0, G.breachGraceT - dt);
   for (let i = breachMarks.length - 1; i >= 0; i--) {
@@ -998,25 +1045,33 @@ function update(dt) {
     player.fireT -= dt;
     if (mouse.down && player.fireT <= 0) fireWeapon();
   }
-  // gelombang
+  // gelombang + ESKALASI milestone
   G.waveT += dt;
   if (G.waveT >= 24) {
     G.waveT = 0; G.wave++;
     SFX.wave(); toast('GELOMBANG ' + G.wave);
+    const wc = wordCountForWave(G.wave);
+    if (wc > G.lastWordCount) {
+      G.lastWordCount = wc;
+      toast('MUSUH KODE: ' + wc + ' KATA SEKALIGUS', 'warn');
+    }
+    const mb = maxBreakersForWave(G.wave);
+    if (mb > G.lastMaxBrk) {
+      G.lastMaxBrk = mb;
+      toast('ANCAMAN KODE MELIMPAH — MAKS ' + mb, 'warn');
+    }
     MUSIC.int = Math.min(1, (G.wave - 1) * .3);
   }
-  // spawn
+  // spawn — ESKALASI: interval makin rapat per wave (min 0.35x)
   if (player.alive && !storm.active) {
     G.spawnT -= dt;
     if (G.spawnT <= 0) {
       spawnOne();
-      G.spawnT = diff.spawn * Math.max(.5, Math.pow(.97, G.wave - 1)) * rand(.7, 1.3);
+      G.spawnT = diff.spawn * Math.max(.35, Math.pow(.94, G.wave - 1)) * rand(.7, 1.3);
     }
   }
-  // keystorm
   if (!storm.active) { G.stormT -= dt; if (G.stormT <= 0 && player.alive) startStorm(); }
   else { storm.t -= dt; if (storm.t <= 0) endStorm(); }
-  // combo
   if (G.combo > 1) { G.comboT -= dt; if (G.comboT <= 0) G.combo = 1; }
 
   updateEnemies(dt);
@@ -1030,11 +1085,14 @@ function update(dt) {
 }
 
 function updateEnemies(dt) {
-  // PREISI: amplitudo goyangan menyesuaikan lebar viewport agar
-  // musuh tidak pernah terdorong keluar tepi kiri/kanan
-  const swaySw = Math.min(160, W * .16);
-  const swayDr = Math.min(34, W * .06);
-  const homeBk = Math.min(70, W * .2);
+  const wv = G.wave;
+  // ESKALASI v1.4: gerakan makin liar seiring wave — amplitudo & frekuensi naik
+  const swayScale = 1 + Math.min(1.4, (wv - 1) * .12);           // amplitudo hingga 2.4x
+  const swaySw = Math.min(160, W * .16) * swayScale;              // swarm: goyangan lebar
+  const swayDr = Math.min(34, W * .06) * swayScale;               // drone: goyangan dasar
+  const homeBk = Math.min(70, W * .2);                            // breaker: homing
+  const drBob = wv >= 4 ? Math.min(20, (wv - 3) * 5) : 0;         // drone: zigzag vertikal mulai wave 4
+  const swarmFrq = 4.6 + Math.min(3.2, (wv - 1) * .14);           // swarm: kedip gerak makin cepat
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     e.t += dt;
@@ -1042,12 +1100,17 @@ function updateEnemies(dt) {
     if (e.errT > 0) e.errT -= dt;
     if (e.stun > 0) e.stun -= dt;
     const slow = (storm.active ? .25 : 1) * (e.stun > 0 ? .15 : 1);
-    if (e.type === 'drone')      { e.y += e.spd * slow * dt; e.x += Math.sin(e.t * 2 + e.phase) * swayDr * dt; }
-    else if (e.type === 'swarm') { e.y += e.spd * 1.35 * slow * dt; e.x += Math.sin(e.t * 4.6 + e.phase) * swaySw * dt; }
+    if (e.type === 'drone') {
+      e.y += e.spd * slow * dt;
+      e.x += Math.sin(e.t * 2 + e.phase) * swayDr * dt;
+      e.y += Math.sin(e.t * 2.6 + e.phase) * drBob * slow * dt;   // ESKALASI: bobbing vertikal
+    } else if (e.type === 'swarm') {
+      e.y += e.spd * 1.35 * slow * dt;
+      e.x += Math.sin(e.t * swarmFrq + e.phase) * swaySw * dt;    // ESKALASI: frekuensi naik
+    }
     else if (e.type === 'tank')  { e.y += e.spd * slow * dt; }
     else { e.y += e.spd * .62 * slow * dt; e.x += clamp(player.x - e.x, -homeBk, homeBk) * dt * .9 * slow; }
-    e.x = clampEX(e.x); // PREISI: selalu di dalam layar
-    // tembakan musuh (hanya kesulitan tinggi)
+    e.x = clampEX(e.x);
     if (diff.shoot && (e.type === 'drone' || e.type === 'swarm') && e.y > 10 && e.y < H * .72 && player.alive) {
       e.shootT -= dt * slow;
       if (e.shootT <= 0) {
@@ -1057,9 +1120,7 @@ function updateEnemies(dt) {
         SFX.eshoot();
       }
     }
-    // lolos ke garis pertahanan (tepat di tepi bawah layar, bukan jauh di bawah)
     if (e.y > H + 16) { enemies.splice(i, 1); onLeak(e); continue; }
-    // tabrakan dengan pemain (pakai radius `cr` yang sesuai visual)
     if (player.alive && player.inv <= 0) {
       const dx = e.x - player.x, dy = e.y - player.y, rr = (e.cr || e.r) + 11;
       if (dx * dx + dy * dy < rr * rr) {
@@ -1074,7 +1135,7 @@ function updateEnemies(dt) {
 function updateBullets(dt) {
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
-    if (b.ion) { // pandu ringan ION
+    if (b.ion) {
       let tg = null, td = 340;
       for (const e of enemies) { const d = Math.hypot(e.x - b.x, e.y - b.y); if (d < td) { td = d; tg = e; } }
       if (tg) {
@@ -1101,7 +1162,7 @@ function updateBullets(dt) {
         bullets.splice(i, 1); dead = true; break;
       }
     }
-    if (!dead) { // menembak jatuh proyektil musuh
+    if (!dead) {
       for (let k = ebullets.length - 1; k >= 0; k--) {
         const eb = ebullets[k];
         const dx = eb.x - b.x, dy = eb.y - b.y;
@@ -1131,7 +1192,7 @@ function updatePups(dt) {
   for (let i = pups.length - 1; i >= 0; i--) {
     const p = pups[i];
     p.t += dt; p.y += p.vy * dt; p.x += Math.sin(p.t * 2.2) * 26 * dt;
-    p.x = clampEX(p.x); // PREISI
+    p.x = clampEX(p.x);
     if (p.y > H + 30) { pups.splice(i, 1); continue; }
     if (player.alive) {
       const dx = p.x - player.x, dy = p.y - player.y;
@@ -1203,7 +1264,7 @@ function drawBreachLine() {
   ctx.setLineDash([]);
   for (const m of breachMarks) {
     const a = clamp(m.t, 0, 1);
-    const mx = safeX(m.x, 150); // PREISI
+    const mx = safeX(m.x, 150);
     const g = ctx.createLinearGradient(mx - 150, 0, mx + 150, 0);
     g.addColorStop(0, 'rgba(255,77,94,0)');
     g.addColorStop(.5, 'rgba(255,77,94,' + (.8 * a).toFixed(3) + ')');
@@ -1262,17 +1323,27 @@ function drawEnemy(e) {
     }
   }
   ctx.restore();
-  // kata kode di atas breaker — PREISI: pusat teks di-clamp agar tidak terpotong tepi
-  if (e.type === 'breaker' && e.shielded && e.word) {
-    ctx.font = '700 13px "Share Tech Mono",monospace';
-    ctx.textAlign = 'center';
-    const n = e.word.length, sp = 11;
-    const half = (n - 1) * sp / 2;
+  // v1.4: label MULTI-KATA di atas breaker — auto-shrink + clamp agar selalu muat
+  if (e.type === 'breaker' && e.shielded && e.words) {
+    const words = e.words;
+    const txtLen = words.reduce((a, w) => a + w.length, 0) + (words.length - 1);
+    let sp = 11;
+    if (txtLen * sp > W - 20) sp = Math.max(6, (W - 20) / txtLen); // ESKALASI: menyusut di layar sempit
+    const half = (txtLen - 1) * sp / 2;
     const cx = safeX(e.x, half + 8);
     const y = Math.max(16, e.y - e.r - 14);
-    for (let i = 0; i < n; i++) {
-      ctx.fillStyle = i < e.typed ? '#57f6c8' : (i === e.typed ? '#ffffff' : 'rgba(255,209,102,.55)');
-      ctx.fillText(e.word[i], cx + (i - (n - 1) / 2) * sp, y);
+    ctx.font = '700 ' + Math.max(8, Math.round(sp * 1.18)) + 'px "Share Tech Mono",monospace';
+    ctx.textAlign = 'center';
+    let ci = 0;
+    for (let wi = 0; wi < words.length; wi++) {
+      for (let li = 0; li < words[wi].length; li++, ci++) {
+        const px = cx + (ci - (txtLen - 1) / 2) * sp;
+        if (wi < e.wIdx || (wi === e.wIdx && li < e.typed)) ctx.fillStyle = '#57f6c8';
+        else if (wi === e.wIdx && li === e.typed) ctx.fillStyle = '#ffffff';
+        else ctx.fillStyle = 'rgba(255,209,102,.55)';
+        ctx.fillText(words[wi][li], px, y);
+      }
+      ci++; // lewati posisi spasi antar kata
     }
   }
 }
@@ -1385,7 +1456,6 @@ function drawFloats() {
   ctx.textAlign = 'center';
   for (const f of floats) {
     ctx.font = '700 ' + f.size + 'px Rajdhani,sans-serif';
-    // PREISI: ukur lebar teks lalu clamp agar tidak pernah terpotong tepi layar
     const w2 = ctx.measureText(f.txt).width / 2 + 6;
     const fx = safeX(f.x, w2);
     ctx.globalAlpha = clamp(f.life * 2, 0, 1);
@@ -1395,25 +1465,28 @@ function drawFloats() {
   ctx.globalAlpha = 1;
 }
 
+// v1.4: panel UPLINK multi-kata — kata demi kata, gap antar kata, auto-shrink
 function drawCodePanel() {
   if (G.state !== 'playing' || !player.alive || storm.active) return;
   const b = getBreakerTarget(); if (!b) return;
-  const word = b.word;
-  // PREISI: panel otomatis mengecil bila kata panjang + layar sempit
+  const words = b.words;
+  const totalChars = words.reduce((a, w) => a + w.length, 0);
+  const gapUnits = words.length - 1;
   let fs = 21;
   ctx.font = '700 ' + fs + 'px "Share Tech Mono",monospace';
   let cw = ctx.measureText('M').width + 9;
-  let bw = cw * word.length + 52, bh = 56;
-  const maxW = W - 24;
+  let gap = Math.round(cw * .8);
+  let bw = cw * totalChars + gap * gapUnits + 52, bh = 56;
+  const maxW = W - 16;
   if (bw > maxW) {
-    fs = Math.max(11, Math.floor(fs * maxW / bw));
+    fs = Math.max(10, Math.floor(fs * maxW / bw));
     ctx.font = '700 ' + fs + 'px "Share Tech Mono",monospace';
     cw = ctx.measureText('M').width + 7;
-    bw = cw * word.length + 40;
+    gap = Math.round(cw * .7);
+    bw = cw * totalChars + gap * gapUnits + 40;
   }
   const bx = Math.round(safeX(W / 2, bw / 2) - bw / 2);
   const by = H - 132;
-  // garis uplink dari musuh ke panel (ujung di pusat panel aktual)
   ctx.setLineDash([4, 6]);
   ctx.strokeStyle = 'rgba(87,246,200,.25)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(b.x, b.y + b.r); ctx.lineTo(bx + bw / 2, by); ctx.stroke();
@@ -1422,25 +1495,36 @@ function drawCodePanel() {
   ctx.fillStyle = 'rgba(5,18,16,.85)'; ctx.fill();
   ctx.strokeStyle = b.errT > 0 ? 'rgba(255,77,94,.9)' : 'rgba(87,246,200,.4)';
   ctx.lineWidth = 1.5; ctx.stroke();
+  // label + indikator progres kata
+  const multi = words.length > 1;
+  let label = 'UPLINK KODE' + (multi
+    ? ' \u2014 KATA ' + (b.wIdx + 1) + '/' + words.length
+    : ' \u2014 KETIK UNTUK PECAHKAN');
   ctx.textAlign = 'left';
   ctx.fillStyle = 'rgba(127,181,168,.85)';
   ctx.font = '600 10px Rajdhani,sans-serif';
-  ctx.fillText(bw < 250 ? 'UPLINK KODE' : 'UPLINK KODE — KETIK UNTUK PECAHKAN', bx + 14, by + 16);
+  if (ctx.measureText(label).width > bw - 24) label = multi ? 'KODE ' + (b.wIdx + 1) + '/' + words.length : 'UPLINK KODE';
+  ctx.fillText(label, bx + 14, by + 16);
+  // huruf per kata; kata selesai mint, aktif putih + kursor, belum amber dim
   ctx.font = '700 ' + fs + 'px "Share Tech Mono",monospace';
   ctx.textAlign = 'center';
   const y0 = by + 41;
-  for (let i = 0; i < word.length; i++) {
-    const cx = bx + 22 + cw * i + cw / 2;
-    if (i < b.typed) ctx.fillStyle = '#57f6c8';
-    else if (i === b.typed) ctx.fillStyle = '#ffffff';
-    else ctx.fillStyle = 'rgba(200,230,220,.4)';
-    ctx.fillText(word[i], cx, y0);
-    if (i === b.typed) { ctx.fillStyle = '#57f6c8'; ctx.fillRect(cx - cw / 2 + 4, y0 + 6, cw - 8, 2); }
+  let x = bx + 22;
+  for (let wi = 0; wi < words.length; wi++) {
+    for (let li = 0; li < words[wi].length; li++) {
+      const cx = x + cw / 2;
+      if (wi < b.wIdx || (wi === b.wIdx && li < b.typed)) ctx.fillStyle = '#57f6c8';
+      else if (wi === b.wIdx && li === b.typed) ctx.fillStyle = '#ffffff';
+      else ctx.fillStyle = 'rgba(200,230,220,.4)';
+      ctx.fillText(words[wi][li], cx, y0);
+      if (wi === b.wIdx && li === b.typed) { ctx.fillStyle = '#57f6c8'; ctx.fillRect(cx - cw / 2 + 4, y0 + 6, cw - 8, 2); }
+      x += cw;
+    }
+    if (wi < words.length - 1) x += gap;
   }
 }
 
 function drawReticle() {
-  // PREISI: crosshair selalu digambar di dalam viewport
   const rx = clamp(mouse.x, 0, W), ry = clamp(mouse.y, 0, H);
   ctx.strokeStyle = 'rgba(87,246,200,.8)'; ctx.lineWidth = 1.2;
   ctx.beginPath(); ctx.arc(rx, ry, 9, 0, TAU); ctx.stroke();
@@ -1494,7 +1578,13 @@ function updateHUD() {
   setBar('hHullI', player.hull / player.maxHull);
   setTxt('hHullT', player.hull + '/' + player.maxHull);
   setBar('hShieldI', player.shield / 3);
+  // ESKALASI: label gelombang menyala amber saat eskalasi kata sedang tinggi
+  const hot = wordCountForWave(G.wave) >= 3 || maxBreakersForWave(G.wave) >= 3;
   setTxt('hWaveTxt', 'GELOMBANG ' + String(G.wave).padStart(2, '0'));
+  if (hudCache.hot !== hot) {
+    hudCache.hot = hot;
+    $('hWaveTxt').classList.toggle('heat', hot);
+  }
   if (storm.active) { setTxt('hStormTxt', 'KEYSTORM AKTIF'); setBar('hStormI', storm.t / storm.dur); }
   else { setTxt('hStormTxt', 'KEYSTORM DALAM ' + Math.ceil(Math.max(0, G.stormT)) + 's'); setBar('hStormI', 1 - G.stormT / diff.storm); }
   if (hudCache.w !== player.weapon) {
@@ -1548,6 +1638,7 @@ function startGame() {
   G.wave = 1; G.waveT = 0; G.score = 0; G.combo = 1; G.comboT = 0;
   G.spawnT = 1.2; G.stormT = diff.storm; G.shakeAmp = 0; G.deadT = 0;
   G.breachGraceT = 0;
+  G.lastWordCount = 1; G.lastMaxBrk = 1; // ESKALASI: reset milestone
   storm.active = false; $('storm').classList.add('hidden');
   Object.assign(player, { x: W / 2, y: H - Math.min(160, H * .3), hull: diff.lives, maxHull: diff.lives, shield: 0,
     weapon: 0, fireT: 0, empT: 0, inv: 2, od: 0, alive: true, tilt: 0 });
@@ -1616,7 +1707,7 @@ function loop(ts) {
   if (G.state !== 'paused') updateBg(dt);
   if (G.state === 'playing') {
     update(dt);
-    enforceBounds(); // jaring pengaman per-frame
+    enforceBounds();
   }
   else if (G.state === 'over') { updateParts(dt); updateFloats(dt); updateBreachFx(dt); enforceBounds(); }
   if (vigA > 0) { vigA = Math.max(0, vigA - 2.4 * dt); $('vig').style.opacity = vigA; }
@@ -1682,7 +1773,6 @@ refreshAbtns();
 resize();
 refreshDiff();
 showScreen('scrTitle');
-// Peringatan untuk perangkat sentuh murni (game ini butuh mouse + keyboard fisik)
 if (window.matchMedia && matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches) {
   setTimeout(() => toast('PERANGKAT SENTUH TERDETEKSI — APLIKASI INI MEMBUTUHKAN MOUSE + KEYBOARD FISIK', 'bad'), 900);
 }
