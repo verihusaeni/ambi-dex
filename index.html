@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>AMBIDEX — Latihan Sinkron Mouse &amp; Keyboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,7 @@
   --mono:'Share Tech Mono',monospace; --disp:'Orbitron',sans-serif; --ui:'Rajdhani',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:var(--bg)}
+html,body{height:100%;overflow:hidden;background:var(--bg);overscroll-behavior:none}
 body{font-family:var(--ui);color:var(--ink);user-select:none;-webkit-user-select:none}
 #cv{position:fixed;inset:0;display:block;touch-action:none}
 body.playing{cursor:none}
@@ -47,7 +47,7 @@ body.playing .btn,body.playing .abtn,body.playing .switch{cursor:pointer}
 .abtn:hover{color:var(--mint);border-color:var(--mint)}
 .abtn.off{color:rgba(127,181,168,.35)}
 .abtn.off::after{content:'';position:absolute;left:5px;right:5px;top:50%;height:1.5px;background:var(--red);transform:rotate(-18deg)}
-.weapon-slots{display:flex;gap:8px}
+.weapon-slots{display:flex;gap:8px;flex-wrap:wrap;max-width:min(58vw,430px)}
 .wslot{min-width:96px;padding:6px 10px 7px;border:1px solid rgba(87,246,200,.22);background:rgba(5,18,16,.6);
   clip-path:polygon(9px 0,100% 0,100% 100%,0 100%,0 9px);transition:.15s}
 .wslot.active{border-color:var(--mint);background:rgba(87,246,200,.13)}
@@ -58,7 +58,7 @@ body.playing .btn,body.playing .abtn,body.playing .switch{cursor:pointer}
 #hEmpBar i{background:var(--amber)}
 #hEmpI.rdy{background:var(--mint)}
 #hEmpL{font-size:10px;letter-spacing:.2em;color:var(--dim);display:block;margin-top:3px}
-#hWave{position:absolute;top:16px;left:50%;transform:translateX(-50%);text-align:center}
+#hWave{position:absolute;top:16px;left:50%;transform:translateX(-50%);text-align:center;max-width:60vw}
 #hWaveTxt{font-family:var(--disp);font-size:15px;letter-spacing:.35em;font-weight:700}
 #hStormTxt{font-size:10px;letter-spacing:.22em;color:var(--dim);margin-top:4px}
 #hStormBar{width:160px;height:3px;background:rgba(87,246,200,.12);margin:5px auto 0}
@@ -76,17 +76,22 @@ body.playing .btn,body.playing .abtn,body.playing .switch{cursor:pointer}
 .s-sub{font-size:12px;letter-spacing:.25em;color:var(--dim)}
 
 /* ============ TOAST ============ */
-#toasts{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+#toasts{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
 .toast{font-family:var(--disp);font-size:12px;letter-spacing:.25em;color:var(--mint);border:1px solid rgba(87,246,200,.4);
-  border-left:3px solid var(--mint);padding:7px 18px;background:rgba(5,18,16,.88);animation:tIn .18s;transition:opacity .3s,transform .3s}
+  border-left:3px solid var(--mint);padding:7px 18px;background:rgba(5,18,16,.88);animation:tIn .18s;transition:opacity .3s,transform .3s;text-align:center}
 .toast.warn{color:var(--amber);border-color:rgba(255,176,77,.4);border-left-color:var(--amber)}
 .toast.bad{color:#ff8b95;border-color:rgba(255,77,94,.4);border-left-color:var(--red)}
 .toast.out{opacity:0;transform:translateY(-8px)}
 @keyframes tIn{from{opacity:0;transform:translateY(8px)}}
 
-/* ============ LAYAR / PANEL ============ */
-.screen{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px;
-  background:radial-gradient(ellipse at 50% 42%,rgba(4,9,11,.2) 0%,rgba(4,9,11,.9) 78%)}
+/* ============ LAYAR / PANEL (responsif & bisa di-scroll) ============ */
+.screen{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;overflow-y:auto;
+  padding:22px 14px;background:radial-gradient(ellipse at 50% 42%,rgba(4,9,11,.2) 0%,rgba(4,9,11,.9) 78%)}
+.screen::before,.screen::after{content:'';flex:1 0 0}
+.screen>*{flex:0 0 auto}
+.screen::-webkit-scrollbar{width:8px}
+.screen::-webkit-scrollbar-track{background:transparent}
+.screen::-webkit-scrollbar-thumb{background:rgba(87,246,200,.25)}
 .hidden{display:none!important}
 .panel{background:rgba(5,16,14,.88);border:1px solid rgba(87,246,200,.28);padding:34px 44px;max-width:min(94vw,700px);
   clip-path:polygon(20px 0,100% 0,100% calc(100% - 20px),calc(100% - 20px) 100%,0 100%,0 20px);text-align:center}
@@ -95,24 +100,32 @@ body.playing .btn,body.playing .abtn,body.playing .switch{cursor:pointer}
 .p-title{font-family:var(--disp);font-weight:700;font-size:clamp(20px,3.4vw,30px);letter-spacing:.1em;margin-bottom:6px}
 
 /* judul */
-.t-top{display:flex;gap:26px;font-size:11px;letter-spacing:.32em;color:var(--dim);margin-bottom:14px;justify-content:center}
-h1.t-title{font-family:var(--disp);font-weight:900;font-size:clamp(56px,10vw,116px);line-height:1;color:#eafff8;letter-spacing:.03em}
+.t-top{display:flex;gap:26px;font-size:11px;letter-spacing:.32em;color:var(--dim);margin-bottom:14px;justify-content:center;flex-wrap:wrap;padding:0 8px}
+h1.t-title{font-family:var(--disp);font-weight:900;font-size:clamp(40px,11vw,116px);line-height:1;color:#eafff8;letter-spacing:.03em;text-align:center}
 h1.t-title em{font-style:normal;color:var(--mint)}
-.t-sub{margin-top:12px;font-size:13px;letter-spacing:.3em;color:var(--dim)}
+.t-sub{margin-top:12px;font-size:13px;letter-spacing:.3em;color:var(--dim);text-align:center}
 .t-rule{width:min(380px,70vw);height:1px;background:rgba(87,246,200,.35);margin:24px auto;position:relative}
 .t-rule::before,.t-rule::after{content:'';position:absolute;top:-3.5px;width:8px;height:8px;background:var(--mint);transform:rotate(45deg)}
 .t-rule::before{left:-4px}.t-rule::after{right:-4px}
-.t-diff{display:flex;border:1px solid rgba(87,246,200,.3)}
+.t-diff{display:flex;border:1px solid rgba(87,246,200,.3);flex-wrap:wrap;justify-content:center}
 .t-diff button{padding:11px 22px;background:transparent;border:0;border-right:1px solid rgba(87,246,200,.18);
   color:var(--dim);font-family:var(--disp);font-size:12px;letter-spacing:.16em;font-weight:700;cursor:pointer;transition:.15s}
 .t-diff button:last-child{border-right:0}
 .t-diff button.on{background:rgba(87,246,200,.14);color:var(--mint)}
 .t-diff button:hover{color:#fff}
-.t-diffdesc{margin-top:11px;font-size:14px;color:var(--dim);letter-spacing:.05em;min-height:20px}
+.t-diffdesc{margin-top:11px;font-size:14px;color:var(--dim);letter-spacing:.05em;min-height:20px;max-width:88vw;text-align:center}
 .t-diffdesc b{color:var(--amber);letter-spacing:.12em}
 .t-actions{display:flex;gap:12px;justify-content:center;margin-top:26px;flex-wrap:wrap}
-.t-best{margin-top:20px;font-size:12px;letter-spacing:.28em;color:var(--dim)}
-.t-foot{position:absolute;bottom:16px;font-size:10px;letter-spacing:.24em;color:rgba(127,181,168,.45);text-align:center;padding:0 16px}
+.t-best{margin-top:20px;font-size:12px;letter-spacing:.28em;color:var(--dim);text-align:center}
+
+/* footer halaman awal */
+.t-foot{position:absolute;bottom:14px;left:0;right:0;text-align:center;padding:0 16px;pointer-events:none}
+.t-foot .foot-info{font-size:10px;letter-spacing:.24em;color:rgba(127,181,168,.45)}
+.t-foot .foot-credit{margin-top:8px;font-size:12px;letter-spacing:.12em;color:rgba(232,255,248,.65);font-weight:600;pointer-events:auto}
+.t-foot .foot-credit a{color:var(--mint);text-decoration:none;border-bottom:1px solid rgba(87,246,200,.45);padding-bottom:1px;transition:.15s}
+.t-foot .foot-credit a:hover{color:#8cffe0;border-color:#8cffe0}
+.t-foot .beat{display:inline-block;color:var(--red);margin:0 3px;animation:beat 1.2s ease-in-out infinite;text-shadow:0 0 8px rgba(255,77,94,.6)}
+@keyframes beat{0%,100%{transform:scale(1)}18%{transform:scale(1.35)}36%{transform:scale(1)}54%{transform:scale(1.2)}}
 
 /* tombol */
 .btn{font-family:var(--disp);font-size:13px;letter-spacing:.2em;font-weight:700;padding:13px 28px;cursor:pointer;
@@ -137,10 +150,10 @@ h1.t-title em{font-style:normal;color:var(--mint)}
 .brief-tips{text-align:left;margin:8px 0 4px;padding:12px 16px;border:1px dashed rgba(255,176,77,.35);background:rgba(255,176,77,.04)}
 .brief-tips p{font-size:13.5px;color:#e8d5b5;line-height:1.55}
 .brief-tips b{color:var(--amber)}
-.p-actions{display:flex;gap:12px;justify-content:center;margin-top:22px}
+.p-actions{display:flex;gap:12px;justify-content:center;margin-top:22px;flex-wrap:wrap}
 
 /* statistik game over */
-.go-stats{display:grid;grid-template-columns:auto auto;gap:9px 46px;margin:20px auto 6px;text-align:left;width:max-content}
+.go-stats{display:grid;grid-template-columns:auto auto;gap:9px 46px;margin:20px auto 6px;text-align:left;width:max-content;max-width:100%}
 .go-k{font-size:11px;letter-spacing:.26em;color:var(--dim);align-self:center}
 .go-v{font-family:var(--disp);font-size:21px;font-weight:700;text-align:right}
 #ovNew{font-family:var(--disp);font-size:12px;letter-spacing:.3em;color:var(--amber);animation:blink .8s steps(2) infinite}
@@ -154,9 +167,58 @@ h1.t-title em{font-style:normal;color:var(--mint)}
 input[type=range]{-webkit-appearance:none;appearance:none;width:220px;height:3px;background:rgba(87,246,200,.25);outline:none;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--mint);transform:rotate(45deg);cursor:pointer}
 input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint);border:0;transform:rotate(45deg);cursor:pointer}
-.switch{position:relative;width:46px;height:23px;border:1px solid rgba(87,246,200,.4);background:transparent;cursor:pointer}
+.switch{position:relative;width:46px;height:23px;border:1px solid rgba(87,246,200,.4);background:transparent;cursor:pointer;flex:0 0 auto}
 .switch i{position:absolute;top:3px;left:3px;width:15px;height:15px;background:var(--dim);transition:.15s}
 .switch.on i{left:26px;background:var(--mint)}
+
+/* ============ RESPONSIVITAS LAYAR ============ */
+@media (max-width:900px){
+  #hHint{display:none}
+  .bar{width:150px}
+  #hEmpBar{width:130px}
+  #hScore{font-size:24px}
+}
+@media (max-width:700px){
+  .panel{padding:24px 18px}
+  .ctrl-ic{width:28px;flex:0 0 28px}
+  .ctrl-name{width:112px;flex:0 0 112px;font-size:10.5px}
+  .ctrl-desc{font-size:13px}
+  .brief-tips p{font-size:12.5px}
+  .go-stats{gap:7px 24px}
+  .go-v{font-size:17px}
+  .btn{padding:11px 20px;font-size:12px}
+  .btn.primary{padding:13px 32px;font-size:14px}
+  .t-diff button{padding:9px 13px;font-size:10.5px}
+  input[type=range]{width:150px}
+  .set-row{gap:14px;flex-wrap:wrap}
+  .weapon-slots{max-width:46vw}
+  .wslot{min-width:80px;padding:5px 8px 6px}
+  .wslot .wn{font-size:11px}
+  .wslot .wk{font-size:8px}
+}
+@media (max-width:560px){
+  .tl{top:10px;left:10px}.tr{top:8px;right:10px}
+  .bl{bottom:10px;left:10px}.br{bottom:10px;right:10px}
+  .bar{width:112px}
+  #hStormBar{width:110px}
+  #hStormTxt{font-size:9px}
+  #hWaveTxt{font-size:12px;letter-spacing:.2em}
+  #stormChar{font-size:64px;width:104px;height:104px;line-height:100px}
+  .s-head{font-size:10px;letter-spacing:.4em}
+  .toast{font-size:10px;padding:6px 12px;letter-spacing:.18em}
+  #toasts{top:60px}
+  .t-top{gap:12px;font-size:9px;letter-spacing:.2em}
+}
+@media (max-height:640px){
+  .t-foot .foot-info{display:none}
+  #scrTitle{padding-bottom:70px}
+}
+@media (max-height:540px){
+  #stormChar{font-size:54px;width:92px;height:92px;line-height:88px}
+  #hHint{display:none}
+  .t-rule{margin:14px auto}
+  .t-actions{margin-top:16px}
+}
 </style>
 </head>
 <body>
@@ -219,7 +281,6 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
 
 <!-- ================= JUDUL ================= -->
 <div class="screen" id="scrTitle">
-    <div class="t-top"><p>Made With &hearts; by <a style="text-decoration: none; color: #e8d5b5;" href="https://wa.me/6285311753792">Veri Husaeni</a> All rights reserved.</p></div>
   <div class="t-top"><span>PROTOKOL-07</span><span>SIMULASI SINKRONISASI NEURO-MOTORIK</span></div>
   <h1 class="t-title">AMBI<em>DEX</em></h1>
   <p class="t-sub">SATU MISI &middot; DUA TANGAN &middot; MOUSE + KEYBOARD</p>
@@ -232,7 +293,10 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
     <button class="btn ghost" id="btnSet">PENGATURAN</button>
   </div>
   <div class="t-best" id="bestLine"></div>
-  <div class="t-foot">AUDIO AKTIF SETELAH INTERAKSI PERTAMA &middot; DIRANCANG UNTUK MOUSE + KEYBOARD FISIK &middot; SEMUA DATA TERSIMPAN LOKAL DI PERAMBAN</div>
+  <div class="t-foot">
+    <div class="foot-info">AUDIO AKTIF SETELAH INTERAKSI PERTAMA &middot; DIRANCANG UNTUK MOUSE + KEYBOARD FISIK &middot; DATA TERSIMPAN LOKAL</div>
+    <div class="foot-credit">Made With <span class="beat">&hearts;</span> by <a href="https://wa.me/6285311753792" target="_blank" rel="noopener">Veri Husaeni</a> All rights reserved.</div>
+  </div>
 </div>
 
 <!-- ================= BRIEFING ================= -->
@@ -341,15 +405,23 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
 <script>
 'use strict';
 /* =====================================================================
-   AMBIDEX — Pelatih sinkronisasi mouse & keyboard (v1.1)
+   AMBIDEX — Pelatih sinkronisasi mouse & keyboard (v1.3 FINAL)
    Arsitektur: state machine + canvas 2D + Web Audio (tanpa aset eksternal)
-   v1.1 — Perbaikan sistem breach (musuh lolos):
-     • Garis pertahanan visual + kilat merah di titik kebocoran
-     • Grace window 1 detik (lolos serentak tidak menumpuk penalti)
-     • SFX khusus "breach" yang jelas berbeda dari hit biasa
-     • Penalti terjadi tepat di garis (bukan jauh di bawah layar)
-     • Hitbox tabrakan pemain lebih jujur (radius `cr` per tipe musuh)
-     • Aturan dijelaskan di briefing
+
+   Riwayat versi:
+   v1.1 — Sistem breach: garis pertahanan visual, grace window 1 detik,
+          SFX khusus, hitbox tabrakan jujur, penjelasan di briefing.
+   v1.2 — Presisi viewport: spawn adaptif, amplitudo gerak adaptif,
+          re-clamp semua entitas saat resize, teks/panel selalu muat,
+          footer kredit di halaman awal.
+   v1.3 — Responsivitas penuh semua layar (FINAL):
+          • Jaring pengaman per-frame: enforceBounds() menjamin TIDAK ADA
+            musuh/power-up di luar layar pada kondisi apa pun
+          • Mengikuti visualViewport (URL bar mobile, zoom, orientasi)
+          • UI responsif: HUD/panel/typography menyesuaikan semua ukuran
+          • Semua layar menu bisa di-scroll bila konten lebih tinggi
+            dari viewport (teknik auto-margin flex)
+          • Peringatan otomatis pada perangkat touch-only
    ===================================================================== */
 
 // ---------- UTIL ----------
@@ -377,16 +449,35 @@ let settings = Object.assign({ diff:'pilot', music:.7, sfx:.9, shake:true, muteM
 store.set('settings', settings);
 let diff = DIFFS[settings.diff];
 
-// ---------- KANVAS ----------
+// ---------- KANVAS (presisi viewport) ----------
 const cv = $('cv'), ctx = cv.getContext('2d');
 let W = innerWidth, H = innerHeight, DPR = 1;
 let stars = [], gridOff = 0;
+
+// PREISI: clamp horizontal yang selalu valid walau layar sangat sempit
+const clampEX = x => clamp(x, Math.min(26, W / 2), Math.max(W - 26, W / 2));
+// PREISI: clamp elemen selebar `half` px dari pusatnya; jika tak muat, pakai tengah layar
+const safeX  = (x, half) => clamp(x, Math.min(half, W / 2), Math.max(W - half, W / 2));
+// PREISI: clamp pemain dengan batas yang selalu valid
+const clampPlayerX = x => clamp(x, 24, Math.max(25, W - 24));
+const clampPlayerY = y => clamp(y, Math.min(60, H / 3), Math.max(H / 3 + 1, H - 24));
+
 function resize() {
   W = innerWidth; H = innerHeight;
   DPR = Math.min(window.devicePixelRatio || 1, 2);
-  cv.width = W * DPR; cv.height = H * DPR;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   makeStars();
+  // PREISI: jika viewport berubah di tengah permainan, paksa semua entitas
+  // kembali ke dalam layar — tidak ada musuh/power-up yang tertinggal di luar
+  for (const e of enemies) e.x = clampEX(e.x);
+  for (const p of pups) p.x = clampEX(p.x);
+  for (const m of breachMarks) m.x = clampEX(m.x);
+  player.x = clampPlayerX(player.x);
+  player.y = clampPlayerY(player.y);
+  mouse.x = clamp(mouse.x, 0, W);
+  mouse.y = clamp(mouse.y, 0, H);
 }
 function makeStars() {
   stars = [];
@@ -394,6 +485,8 @@ function makeStars() {
   for (let i = 0; i < n; i++) stars.push({ x: Math.random() * W, y: Math.random() * H, z: rand(.25, 1), tw: rand(0, TAU) });
 }
 addEventListener('resize', resize);
+// PREISI: mobile — URL bar muncul/hilang & rotasi layar memicu visualViewport
+if (window.visualViewport) visualViewport.addEventListener('resize', resize);
 
 // ---------- AUDIO (semua suara disintesis) ----------
 const AU = {
@@ -471,7 +564,6 @@ const SFX = {
   pickup()   { AU.tone({ w:'sine', f0:520, f1:880, d:.12, v:.18 }); AU.tone({ w:'sine', f0:780, f1:1320, d:.14, v:.16, at: AU.ready ? AU.ctx.currentTime + .09 : 0 }); },
   shieldHit(){ AU.tone({ w:'sine', f0:900, f1:300, d:.15, v:.22 }); AU.noise({ d:.12, v:.13, f0:2200, f1:500 }); },
   hurt()     { AU.tone({ w:'sawtooth', f0:220, f1:50, d:.32, v:.38 }); AU.noise({ d:.25, v:.22, f0:900, f1:120 }); },
-  alarm()    { AU.tone({ w:'square', f0:640, d:.09, v:.13 }); AU.tone({ w:'square', f0:640, d:.09, v:.13, at: AU.ready ? AU.ctx.currentTime + .14 : 0 }); },
   // SFX khusus pelanggaran garis: klakson dua nada — jelas berbeda dari hit biasa
   breach() {
     if (!AU.ready) return;
@@ -580,6 +672,14 @@ let stats = { shots:0, hits:0, keys:0, keysErr:0, maxCombo:1, time:0 };
 let eid = 0, vigA = 0, hudCache = {};
 const storm = { active:false, t:0, dur:6.5, letter:'', count:0, streak:0 };
 const mouse = { x: innerWidth / 2, y: innerHeight * .75, down: false };
+
+// JARING PENGAMAN: dipanggil tiap frame — menjamin tidak ada entitas di luar layar
+function enforceBounds() {
+  for (const e of enemies) e.x = clampEX(e.x);
+  for (const p of pups) p.x = clampEX(p.x);
+  player.x = clampPlayerX(player.x);
+  player.y = clampPlayerY(player.y);
+}
 
 const WEAPONS = [
   { id:'LASER',  rate:.11, dmg:1, spd:920, clr:'#57f6c8' },
@@ -693,7 +793,7 @@ function updateStormDom() {
   $('stormBarI').style.transform = 'scaleX(' + clamp(storm.t / storm.dur, 0, 1) + ')';
 }
 
-// ---------- SPAWN MUSUH ----------
+// ---------- SPAWN MUSUH (selama di dalam viewport) ----------
 function spawnOne() {
   const nBrk = enemies.reduce((a, e) => a + (e.type === 'breaker' ? 1 : 0), 0);
   const nTank = enemies.reduce((a, e) => a + (e.type === 'tank' ? 1 : 0), 0);
@@ -707,7 +807,9 @@ function spawnOne() {
   if (r < pBrk) type = 'breaker';
   else if (r < pBrk + pTank) type = 'tank';
   else if (r < pBrk + pTank + pSwm) type = 'swarm';
-  const e = { id:++eid, type, x:rand(60, W-60), y:-46, t:0, phase:rand(0,TAU), stun:0, flash:0, errT:0,
+  // PREISI: margin spawn adaptif — musuh selalu lahir DI DALAM lebar layar
+  const m = Math.min(60, Math.max(24, W * .08));
+  const e = { id:++eid, type, x: rand(m, Math.max(m + 1, W - m)), y:-46, t:0, phase:rand(0,TAU), stun:0, flash:0, errT:0,
               shielded:false, word:'', typed:0, shootT:rand(2,3.5), spd:100, r:16, cr:13, hp:2, score:100 };
   // r  = radius untuk hit peluru (agak besar agar memuaskan ditembak)
   // cr = radius untuk tabrakan dengan pemain (sesuai ukuran visual)
@@ -795,15 +897,15 @@ function codeKill(e) {
 // agar beberapa musuh yang lolos serentak tidak menumpuk penalti sekaligus.
 function onLeak(e) {
   if (!player.alive) return;
-  breachMarks.push({ x: clamp(e.x, 70, W - 70), t: 1.1 });
+  breachMarks.push({ x: safeX(e.x, 70), t: 1.1 });
   if (G.breachGraceT > 0) {
-    floats.push({ x: clamp(e.x, 90, W - 90), y: H - 62, txt: 'BOLOS — DIAMPUNI', life: .6, maxLife: .6, clr: '#ffb04d', size: 12 });
+    floats.push({ x: safeX(e.x, 60), y: H - 62, txt: 'BOLOS — DIAMPUNI', life: .6, maxLife: .6, clr: '#ffb04d', size: 12 });
     return;
   }
   G.breachGraceT = 1;
   player.hull = Math.max(0, player.hull - 1);
   vigA = 1; SFX.breach(); shake(6);
-  floats.push({ x: clamp(e.x, 110, W - 110), y: H - 62, txt: 'MUSUH BOLOS −1 HULL', life: 1.2, maxLife: 1.2, clr: '#ff4d5e', size: 16 });
+  floats.push({ x: safeX(e.x, 95), y: H - 62, txt: 'MUSUH BOLOS −1 HULL', life: 1.2, maxLife: 1.2, clr: '#ff4d5e', size: 16 });
   if (player.hull <= 0) playerDie();
 }
 function hitPlayer() {
@@ -882,9 +984,9 @@ function update(dt) {
   if (player.alive) {
     const nx = player.x + (mouse.x - player.x) * Math.min(1, dt * 13);
     player.tilt += (clamp((nx - player.x) * .06, -.55, .55) - player.tilt) * Math.min(1, dt * 10);
-    player.x = clamp(nx, 24, W - 24);
+    player.x = clampPlayerX(nx);
     player.y += (mouse.y - player.y) * Math.min(1, dt * 13);
-    player.y = clamp(player.y, 60, H - 24);
+    player.y = clampPlayerY(player.y);
     player.inv = Math.max(0, player.inv - dt);
     player.od = Math.max(0, player.od - dt);
     const wasCd = player.empT > 0;
@@ -928,6 +1030,11 @@ function update(dt) {
 }
 
 function updateEnemies(dt) {
+  // PREISI: amplitudo goyangan menyesuaikan lebar viewport agar
+  // musuh tidak pernah terdorong keluar tepi kiri/kanan
+  const swaySw = Math.min(160, W * .16);
+  const swayDr = Math.min(34, W * .06);
+  const homeBk = Math.min(70, W * .2);
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     e.t += dt;
@@ -935,11 +1042,11 @@ function updateEnemies(dt) {
     if (e.errT > 0) e.errT -= dt;
     if (e.stun > 0) e.stun -= dt;
     const slow = (storm.active ? .25 : 1) * (e.stun > 0 ? .15 : 1);
-    if (e.type === 'drone')      { e.y += e.spd * slow * dt; e.x += Math.sin(e.t * 2 + e.phase) * 34 * dt; }
-    else if (e.type === 'swarm') { e.y += e.spd * 1.35 * slow * dt; e.x += Math.sin(e.t * 4.6 + e.phase) * 160 * dt; }
+    if (e.type === 'drone')      { e.y += e.spd * slow * dt; e.x += Math.sin(e.t * 2 + e.phase) * swayDr * dt; }
+    else if (e.type === 'swarm') { e.y += e.spd * 1.35 * slow * dt; e.x += Math.sin(e.t * 4.6 + e.phase) * swaySw * dt; }
     else if (e.type === 'tank')  { e.y += e.spd * slow * dt; }
-    else { e.y += e.spd * .62 * slow * dt; e.x += clamp(player.x - e.x, -70, 70) * dt * .9 * slow; }
-    e.x = clamp(e.x, 26, W - 26);
+    else { e.y += e.spd * .62 * slow * dt; e.x += clamp(player.x - e.x, -homeBk, homeBk) * dt * .9 * slow; }
+    e.x = clampEX(e.x); // PREISI: selalu di dalam layar
     // tembakan musuh (hanya kesulitan tinggi)
     if (diff.shoot && (e.type === 'drone' || e.type === 'swarm') && e.y > 10 && e.y < H * .72 && player.alive) {
       e.shootT -= dt * slow;
@@ -1024,6 +1131,7 @@ function updatePups(dt) {
   for (let i = pups.length - 1; i >= 0; i--) {
     const p = pups[i];
     p.t += dt; p.y += p.vy * dt; p.x += Math.sin(p.t * 2.2) * 26 * dt;
+    p.x = clampEX(p.x); // PREISI
     if (p.y > H + 30) { pups.splice(i, 1); continue; }
     if (player.alive) {
       const dx = p.x - player.x, dy = p.y - player.y;
@@ -1086,7 +1194,7 @@ function drawBg() {
   ctx.stroke();
 }
 
-// ---------- RENDER: GARIS PERTAHANAN (v1.1) ----------
+// ---------- RENDER: GARIS PERTAHANAN ----------
 function drawBreachLine() {
   ctx.strokeStyle = 'rgba(255,77,94,.22)';
   ctx.lineWidth = 1;
@@ -1095,16 +1203,17 @@ function drawBreachLine() {
   ctx.setLineDash([]);
   for (const m of breachMarks) {
     const a = clamp(m.t, 0, 1);
-    const g = ctx.createLinearGradient(m.x - 150, 0, m.x + 150, 0);
+    const mx = safeX(m.x, 150); // PREISI
+    const g = ctx.createLinearGradient(mx - 150, 0, mx + 150, 0);
     g.addColorStop(0, 'rgba(255,77,94,0)');
     g.addColorStop(.5, 'rgba(255,77,94,' + (.8 * a).toFixed(3) + ')');
     g.addColorStop(1, 'rgba(255,77,94,0)');
     ctx.strokeStyle = g; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(m.x - 150, H - 7); ctx.lineTo(m.x + 150, H - 7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(mx - 150, H - 7); ctx.lineTo(mx + 150, H - 7); ctx.stroke();
     const yy = H - 14 - (1.1 - m.t) * 30;
     ctx.strokeStyle = 'rgba(255,77,94,' + (.5 * a).toFixed(3) + ')'; ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(m.x - 7, yy + 7); ctx.lineTo(m.x, yy); ctx.lineTo(m.x + 7, yy + 7);
+    ctx.moveTo(mx - 7, yy + 7); ctx.lineTo(mx, yy); ctx.lineTo(mx + 7, yy + 7);
     ctx.stroke();
   }
 }
@@ -1153,14 +1262,17 @@ function drawEnemy(e) {
     }
   }
   ctx.restore();
-  // kata kode di atas breaker
+  // kata kode di atas breaker — PREISI: pusat teks di-clamp agar tidak terpotong tepi
   if (e.type === 'breaker' && e.shielded && e.word) {
     ctx.font = '700 13px "Share Tech Mono",monospace';
     ctx.textAlign = 'center';
-    const y = e.y - e.r - 14;
-    for (let i = 0; i < e.word.length; i++) {
+    const n = e.word.length, sp = 11;
+    const half = (n - 1) * sp / 2;
+    const cx = safeX(e.x, half + 8);
+    const y = Math.max(16, e.y - e.r - 14);
+    for (let i = 0; i < n; i++) {
       ctx.fillStyle = i < e.typed ? '#57f6c8' : (i === e.typed ? '#ffffff' : 'rgba(255,209,102,.55)');
-      ctx.fillText(e.word[i], e.x + (i - (e.word.length - 1) / 2) * 11, y);
+      ctx.fillText(e.word[i], cx + (i - (n - 1) / 2) * sp, y);
     }
   }
 }
@@ -1272,10 +1384,13 @@ function drawParts() {
 function drawFloats() {
   ctx.textAlign = 'center';
   for (const f of floats) {
-    ctx.globalAlpha = clamp(f.life * 2, 0, 1);
     ctx.font = '700 ' + f.size + 'px Rajdhani,sans-serif';
+    // PREISI: ukur lebar teks lalu clamp agar tidak pernah terpotong tepi layar
+    const w2 = ctx.measureText(f.txt).width / 2 + 6;
+    const fx = safeX(f.x, w2);
+    ctx.globalAlpha = clamp(f.life * 2, 0, 1);
     ctx.fillStyle = f.clr;
-    ctx.fillText(f.txt, f.x, f.y);
+    ctx.fillText(f.txt, fx, f.y);
   }
   ctx.globalAlpha = 1;
 }
@@ -1284,14 +1399,24 @@ function drawCodePanel() {
   if (G.state !== 'playing' || !player.alive || storm.active) return;
   const b = getBreakerTarget(); if (!b) return;
   const word = b.word;
-  ctx.font = '700 21px "Share Tech Mono",monospace';
-  const cw = ctx.measureText('M').width + 9;
-  const bw = cw * word.length + 52, bh = 56;
-  const bx = Math.round(W / 2 - bw / 2), by = H - 132;
-  // garis uplink dari musuh ke panel
+  // PREISI: panel otomatis mengecil bila kata panjang + layar sempit
+  let fs = 21;
+  ctx.font = '700 ' + fs + 'px "Share Tech Mono",monospace';
+  let cw = ctx.measureText('M').width + 9;
+  let bw = cw * word.length + 52, bh = 56;
+  const maxW = W - 24;
+  if (bw > maxW) {
+    fs = Math.max(11, Math.floor(fs * maxW / bw));
+    ctx.font = '700 ' + fs + 'px "Share Tech Mono",monospace';
+    cw = ctx.measureText('M').width + 7;
+    bw = cw * word.length + 40;
+  }
+  const bx = Math.round(safeX(W / 2, bw / 2) - bw / 2);
+  const by = H - 132;
+  // garis uplink dari musuh ke panel (ujung di pusat panel aktual)
   ctx.setLineDash([4, 6]);
   ctx.strokeStyle = 'rgba(87,246,200,.25)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(b.x, b.y + b.r); ctx.lineTo(W / 2, by); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(b.x, b.y + b.r); ctx.lineTo(bx + bw / 2, by); ctx.stroke();
   ctx.setLineDash([]);
   chamferRect(bx, by, bw, bh, 10);
   ctx.fillStyle = 'rgba(5,18,16,.85)'; ctx.fill();
@@ -1300,8 +1425,8 @@ function drawCodePanel() {
   ctx.textAlign = 'left';
   ctx.fillStyle = 'rgba(127,181,168,.85)';
   ctx.font = '600 10px Rajdhani,sans-serif';
-  ctx.fillText('UPLINK KODE — KETIK UNTUK PECAHKAN', bx + 14, by + 16);
-  ctx.font = '700 21px "Share Tech Mono",monospace';
+  ctx.fillText(bw < 250 ? 'UPLINK KODE' : 'UPLINK KODE — KETIK UNTUK PECAHKAN', bx + 14, by + 16);
+  ctx.font = '700 ' + fs + 'px "Share Tech Mono",monospace';
   ctx.textAlign = 'center';
   const y0 = by + 41;
   for (let i = 0; i < word.length; i++) {
@@ -1315,16 +1440,18 @@ function drawCodePanel() {
 }
 
 function drawReticle() {
+  // PREISI: crosshair selalu digambar di dalam viewport
+  const rx = clamp(mouse.x, 0, W), ry = clamp(mouse.y, 0, H);
   ctx.strokeStyle = 'rgba(87,246,200,.8)'; ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 9, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(rx, ry, 9, 0, TAU); ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(mouse.x - 15, mouse.y); ctx.lineTo(mouse.x - 10, mouse.y);
-  ctx.moveTo(mouse.x + 10, mouse.y); ctx.lineTo(mouse.x + 15, mouse.y);
-  ctx.moveTo(mouse.x, mouse.y - 15); ctx.lineTo(mouse.x, mouse.y - 10);
-  ctx.moveTo(mouse.x, mouse.y + 10); ctx.lineTo(mouse.x, mouse.y + 15);
+  ctx.moveTo(rx - 15, ry); ctx.lineTo(rx - 10, ry);
+  ctx.moveTo(rx + 10, ry); ctx.lineTo(rx + 15, ry);
+  ctx.moveTo(rx, ry - 15); ctx.lineTo(rx, ry - 10);
+  ctx.moveTo(rx, ry + 10); ctx.lineTo(rx, ry + 15);
   ctx.stroke();
   ctx.fillStyle = 'rgba(87,246,200,.9)';
-  ctx.fillRect(mouse.x - 1, mouse.y - 1, 2, 2);
+  ctx.fillRect(rx - 1, ry - 1, 2, 2);
 }
 
 function drawWorld() {
@@ -1422,7 +1549,7 @@ function startGame() {
   G.spawnT = 1.2; G.stormT = diff.storm; G.shakeAmp = 0; G.deadT = 0;
   G.breachGraceT = 0;
   storm.active = false; $('storm').classList.add('hidden');
-  Object.assign(player, { x: W / 2, y: H - 160, hull: diff.lives, maxHull: diff.lives, shield: 0,
+  Object.assign(player, { x: W / 2, y: H - Math.min(160, H * .3), hull: diff.lives, maxHull: diff.lives, shield: 0,
     weapon: 0, fireT: 0, empT: 0, inv: 2, od: 0, alive: true, tilt: 0 });
   stats = { shots: 0, hits: 0, keys: 0, keysErr: 0, maxCombo: 1, time: 0 };
   vigA = 0; $('vig').style.opacity = 0;
@@ -1487,8 +1614,11 @@ function loop(ts) {
   if (dt < 0) dt = 0;
   G.bgT += dt;
   if (G.state !== 'paused') updateBg(dt);
-  if (G.state === 'playing') update(dt);
-  else if (G.state === 'over') { updateParts(dt); updateFloats(dt); updateBreachFx(dt); }
+  if (G.state === 'playing') {
+    update(dt);
+    enforceBounds(); // jaring pengaman per-frame
+  }
+  else if (G.state === 'over') { updateParts(dt); updateFloats(dt); updateBreachFx(dt); enforceBounds(); }
   if (vigA > 0) { vigA = Math.max(0, vigA - 2.4 * dt); $('vig').style.opacity = vigA; }
   if (G.shakeAmp > 0) G.shakeAmp = Math.max(0, G.shakeAmp - 26 * dt);
   if (G.state === 'playing') updateHUD();
@@ -1552,6 +1682,10 @@ refreshAbtns();
 resize();
 refreshDiff();
 showScreen('scrTitle');
+// Peringatan untuk perangkat sentuh murni (game ini butuh mouse + keyboard fisik)
+if (window.matchMedia && matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches) {
+  setTimeout(() => toast('PERANGKAT SENTUH TERDETEKSI — APLIKASI INI MEMBUTUHKAN MOUSE + KEYBOARD FISIK', 'bad'), 900);
+}
 requestAnimationFrame(loop);
 </script>
 </body>
