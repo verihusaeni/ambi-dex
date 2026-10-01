@@ -85,9 +85,9 @@ Cukup sebuah browser modern (Chrome, Edge, Firefox, Safari — versi terakhir). 
 
 ```bash
 # unduh / clone repo, lalu buka filenya
-git clone https://github.com/USERNAME/ambidex.git
+git clone https://github.com/USERNAME/ambi-dex.git
 cd ambidex
-# buka ambidex.html dengan double-click
+# buka index.html dengan double-click
 ```
 
 **Opsi 2 — Lokal via server (opsional):**
@@ -95,7 +95,7 @@ cd ambidex
 ```bash
 # Python
 python -m http.server 8080
-# lalu buka http://localhost:8080/ambidex.html
+# lalu buka http://localhost:8080/index.html
 
 # atau Node.js
 npx serve .
@@ -104,7 +104,7 @@ npx serve .
 **Opsi 3 — Deploy online (gratis):**
 
 - **GitHub Pages**: Settings → Pages → pilih branch `main` → selesai
-- **Netlify / Vercel**: drag & drop folder berisi `ambidex.html`
+- **Netlify / Vercel**: drag & drop folder berisi `index.html`
 
 > ⚠️ **Catatan:** Aplikasi ini dirancang untuk **mouse + keyboard fisik**. Perangkat touch-only (HP/tablet) akan mendapat peringatan otomatis.
 
