@@ -4,7 +4,7 @@
 
 *Satu Misi · Dua Tangan · Mouse + Keyboard*
 
-![Version](https://img.shields.io/badge/version-1.3_FINAL-57f6c8?style=for-the-badge&labelColor=04090b)
+![Version](https://img.shields.io/badge/version-1.4_-57f6c8?style=for-the-badge&labelColor=04090b)
 ![Dependencies](https://img.shields.io/badge/dependencies-0-ffb04d?style=for-the-badge&labelColor=04090b)
 ![Vanilla JS](https://img.shields.io/badge/vanilla-JS_100%25-57f6c8?style=for-the-badge&labelColor=04090b)
 ![License](https://img.shields.io/badge/license-All_Rights_Reserved-ff4d5e?style=for-the-badge&labelColor=04090b)
