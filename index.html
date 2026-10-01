@@ -270,6 +270,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
     <div class="brief-tips">
       <p>&#9656; Drone bergaris perisai hanya runtuh oleh <b>EMP</b>. Kristal kode tidak bisa ditembak — ketik kata di panel <b>UPLINK KODE</b> sebelum ia lolos ke bawah.</p>
       <p>&#9656; Sesekali <b>KEYSTORM</b> meledak: ketik huruf yang muncul secepat mungkin untuk bonus besar dan perbaikan hull.</p>
+      <p>&#9656; Musuh yang <b>lolos melewati garis pertahanan</b> di bawah layar memotong 1 hull — perhatikan kilat merah di garis. Beberapa musuh yang lolos bersamaan hanya dihitung sekali per detik.</p>
     </div>
     <div class="p-actions">
       <button class="btn primary" id="btnLaunch">LAUNCH &#9656;</button>
@@ -340,8 +341,15 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
 <script>
 'use strict';
 /* =====================================================================
-   AMBIDEX — Pelatih sinkronisasi mouse & keyboard
+   AMBIDEX — Pelatih sinkronisasi mouse & keyboard (v1.1)
    Arsitektur: state machine + canvas 2D + Web Audio (tanpa aset eksternal)
+   v1.1 — Perbaikan sistem breach (musuh lolos):
+     • Garis pertahanan visual + kilat merah di titik kebocoran
+     • Grace window 1 detik (lolos serentak tidak menumpuk penalti)
+     • SFX khusus "breach" yang jelas berbeda dari hit biasa
+     • Penalti terjadi tepat di garis (bukan jauh di bawah layar)
+     • Hitbox tabrakan pemain lebih jujur (radius `cr` per tipe musuh)
+     • Aturan dijelaskan di briefing
    ===================================================================== */
 
 // ---------- UTIL ----------
@@ -464,6 +472,14 @@ const SFX = {
   shieldHit(){ AU.tone({ w:'sine', f0:900, f1:300, d:.15, v:.22 }); AU.noise({ d:.12, v:.13, f0:2200, f1:500 }); },
   hurt()     { AU.tone({ w:'sawtooth', f0:220, f1:50, d:.32, v:.38 }); AU.noise({ d:.25, v:.22, f0:900, f1:120 }); },
   alarm()    { AU.tone({ w:'square', f0:640, d:.09, v:.13 }); AU.tone({ w:'square', f0:640, d:.09, v:.13, at: AU.ready ? AU.ctx.currentTime + .14 : 0 }); },
+  // SFX khusus pelanggaran garis: klakson dua nada — jelas berbeda dari hit biasa
+  breach() {
+    if (!AU.ready) return;
+    const t = AU.ctx.currentTime;
+    AU.tone({ w:'square', f0:196, f1:98, d:.25, v:.3, at:t });
+    AU.tone({ w:'square', f0:196, f1:98, d:.25, v:.3, at:t + .27 });
+    AU.noise({ d:.45, v:.16, f0:600, f1:70 });
+  },
   uiTick()   { AU.tone({ w:'square', f0:1400, f1:900, d:.04, v:.07 }); },
   wave()     { AU.tone({ w:'triangle', f0:440, d:.1, v:.14 }); AU.tone({ w:'triangle', f0:660, d:.12, v:.14, at: AU.ready ? AU.ctx.currentTime + .1 : 0 }); AU.tone({ w:'triangle', f0:880, d:.18, v:.14, at: AU.ready ? AU.ctx.currentTime + .2 : 0 }); },
   stormGo()  { AU.noise({ d:.6, v:.26, f0:300, f1:2400, type:'bandpass', q:2 }); },
@@ -557,9 +573,9 @@ addEventListener('pointerdown', bootAudio, { once: true });
 addEventListener('keydown', bootAudio, { once: true });
 
 // ---------- STATE GLOBAL ----------
-const G = { state:'title', bgT:0, time:0, wave:1, waveT:0, score:0, combo:1, comboT:0, spawnT:1.2, stormT:40, shakeAmp:0, deadT:0 };
+const G = { state:'title', bgT:0, time:0, wave:1, waveT:0, score:0, combo:1, comboT:0, spawnT:1.2, stormT:40, shakeAmp:0, deadT:0, breachGraceT:0 };
 const player = { x:0, y:0, hull:3, maxHull:3, shield:0, weapon:0, fireT:0, empT:0, inv:0, od:0, alive:false, tilt:0 };
-let enemies = [], bullets = [], ebullets = [], parts = [], floats = [], pups = [];
+let enemies = [], bullets = [], ebullets = [], parts = [], floats = [], pups = [], breachMarks = [];
 let stats = { shots:0, hits:0, keys:0, keysErr:0, maxCombo:1, time:0 };
 let eid = 0, vigA = 0, hudCache = {};
 const storm = { active:false, t:0, dur:6.5, letter:'', count:0, streak:0 };
@@ -692,11 +708,13 @@ function spawnOne() {
   else if (r < pBrk + pTank) type = 'tank';
   else if (r < pBrk + pTank + pSwm) type = 'swarm';
   const e = { id:++eid, type, x:rand(60, W-60), y:-46, t:0, phase:rand(0,TAU), stun:0, flash:0, errT:0,
-              shielded:false, word:'', typed:0, shootT:rand(2,3.5), spd:100, r:16, hp:2, score:100 };
-  if (type === 'drone')       { e.spd = rand(70,100) * spdM;  e.r = 17; e.hp = Math.ceil(2 * diff.hp); e.score = 100; }
-  else if (type === 'swarm')  { e.spd = rand(115,150) * spdM; e.r = 12; e.hp = 1; e.score = 60; }
-  else if (type === 'tank')   { e.spd = rand(36,50) * spdM;   e.r = 30; e.hp = Math.ceil(8 * diff.hp); e.score = 250; e.shielded = true; }
-  else                        { e.spd = rand(44,58) * spdM;   e.r = 22; e.hp = 2; e.score = 400; e.shielded = true; e.word = pickWord(); e.typed = 0; }
+              shielded:false, word:'', typed:0, shootT:rand(2,3.5), spd:100, r:16, cr:13, hp:2, score:100 };
+  // r  = radius untuk hit peluru (agak besar agar memuaskan ditembak)
+  // cr = radius untuk tabrakan dengan pemain (sesuai ukuran visual)
+  if (type === 'drone')       { e.spd = rand(70,100) * spdM;  e.r = 17; e.cr = 13; e.hp = Math.ceil(2 * diff.hp); e.score = 100; }
+  else if (type === 'swarm')  { e.spd = rand(115,150) * spdM; e.r = 12; e.cr = 9;  e.hp = 1; e.score = 60; }
+  else if (type === 'tank')   { e.spd = rand(36,50) * spdM;   e.r = 30; e.cr = 24; e.hp = Math.ceil(8 * diff.hp); e.score = 250; e.shielded = true; }
+  else                        { e.spd = rand(44,58) * spdM;   e.r = 22; e.cr = 17; e.hp = 2; e.score = 400; e.shielded = true; e.word = pickWord(); e.typed = 0; }
   enemies.push(e);
 }
 
@@ -773,11 +791,19 @@ function codeKill(e) {
   player.empT = 0; // imbalan: EMP langsung siap kembali
   if (Math.random() < .4 && player.alive) spawnPup(e.x, e.y);
 }
+// Musuh lolos ke garis pertahanan: penalti 1 hull, dengan grace window 1 detik
+// agar beberapa musuh yang lolos serentak tidak menumpuk penalti sekaligus.
 function onLeak(e) {
   if (!player.alive) return;
+  breachMarks.push({ x: clamp(e.x, 70, W - 70), t: 1.1 });
+  if (G.breachGraceT > 0) {
+    floats.push({ x: clamp(e.x, 90, W - 90), y: H - 62, txt: 'BOLOS — DIAMPUNI', life: .6, maxLife: .6, clr: '#ffb04d', size: 12 });
+    return;
+  }
+  G.breachGraceT = 1;
   player.hull = Math.max(0, player.hull - 1);
-  vigA = 1; SFX.alarm(); shake(4);
-  floats.push({ x:e.x, y:H-50, txt:'BOLOS −1 HULL', life:1, maxLife:1, clr:'#ff4d5e', size:14 });
+  vigA = 1; SFX.breach(); shake(6);
+  floats.push({ x: clamp(e.x, 110, W - 110), y: H - 62, txt: 'MUSUH BOLOS −1 HULL', life: 1.2, maxLife: 1.2, clr: '#ff4d5e', size: 16 });
   if (player.hull <= 0) playerDie();
 }
 function hitPlayer() {
@@ -840,10 +866,19 @@ function updateFloats(dt) {
     if (f.life <= 0) floats.splice(i, 1);
   }
 }
+// grace window + peluruhan tanda kebocoran di garis pertahanan
+function updateBreachFx(dt) {
+  G.breachGraceT = Math.max(0, G.breachGraceT - dt);
+  for (let i = breachMarks.length - 1; i >= 0; i--) {
+    breachMarks[i].t -= dt;
+    if (breachMarks[i].t <= 0) breachMarks.splice(i, 1);
+  }
+}
 
 // ---------- UPDATE UTAMA ----------
 function update(dt) {
   G.time += dt; stats.time += dt;
+  updateBreachFx(dt);
   if (player.alive) {
     const nx = player.x + (mouse.x - player.x) * Math.min(1, dt * 13);
     player.tilt += (clamp((nx - player.x) * .06, -.55, .55) - player.tilt) * Math.min(1, dt * 10);
@@ -915,11 +950,11 @@ function updateEnemies(dt) {
         SFX.eshoot();
       }
     }
-    // lolos ke bawah
-    if (e.y > H + 46) { enemies.splice(i, 1); onLeak(e); continue; }
-    // tabrakan dengan pemain
+    // lolos ke garis pertahanan (tepat di tepi bawah layar, bukan jauh di bawah)
+    if (e.y > H + 16) { enemies.splice(i, 1); onLeak(e); continue; }
+    // tabrakan dengan pemain (pakai radius `cr` yang sesuai visual)
     if (player.alive && player.inv <= 0) {
-      const dx = e.x - player.x, dy = e.y - player.y, rr = e.r + 14;
+      const dx = e.x - player.x, dy = e.y - player.y, rr = (e.cr || e.r) + 11;
       if (dx * dx + dy * dy < rr * rr) {
         hitPlayer();
         if (e.type !== 'tank') { explosion(e.x, e.y, '#ffb04d', 14, false); enemies.splice(i, 1); continue; }
@@ -1049,6 +1084,29 @@ function drawBg() {
   for (let y = off - gs; y < H + gs; y += gs) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
   for (let x = 0; x <= W; x += gs) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
   ctx.stroke();
+}
+
+// ---------- RENDER: GARIS PERTAHANAN (v1.1) ----------
+function drawBreachLine() {
+  ctx.strokeStyle = 'rgba(255,77,94,.22)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([12, 9]);
+  ctx.beginPath(); ctx.moveTo(0, H - 7); ctx.lineTo(W, H - 7); ctx.stroke();
+  ctx.setLineDash([]);
+  for (const m of breachMarks) {
+    const a = clamp(m.t, 0, 1);
+    const g = ctx.createLinearGradient(m.x - 150, 0, m.x + 150, 0);
+    g.addColorStop(0, 'rgba(255,77,94,0)');
+    g.addColorStop(.5, 'rgba(255,77,94,' + (.8 * a).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(255,77,94,0)');
+    ctx.strokeStyle = g; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(m.x - 150, H - 7); ctx.lineTo(m.x + 150, H - 7); ctx.stroke();
+    const yy = H - 14 - (1.1 - m.t) * 30;
+    ctx.strokeStyle = 'rgba(255,77,94,' + (.5 * a).toFixed(3) + ')'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(m.x - 7, yy + 7); ctx.lineTo(m.x, yy); ctx.lineTo(m.x + 7, yy + 7);
+    ctx.stroke();
+  }
 }
 
 // ---------- RENDER: ENTITAS ----------
@@ -1270,6 +1328,7 @@ function drawReticle() {
 }
 
 function drawWorld() {
+  drawBreachLine();
   drawPups();
   for (const e of enemies) drawEnemy(e);
   drawBullets();
@@ -1357,10 +1416,11 @@ function openBrief() {
 }
 function startGame() {
   diff = DIFFS[settings.diff];
-  enemies = []; bullets = []; ebullets = []; parts = []; floats = []; pups = [];
+  enemies = []; bullets = []; ebullets = []; parts = []; floats = []; pups = []; breachMarks = [];
   hudCache = {};
   G.wave = 1; G.waveT = 0; G.score = 0; G.combo = 1; G.comboT = 0;
   G.spawnT = 1.2; G.stormT = diff.storm; G.shakeAmp = 0; G.deadT = 0;
+  G.breachGraceT = 0;
   storm.active = false; $('storm').classList.add('hidden');
   Object.assign(player, { x: W / 2, y: H - 160, hull: diff.lives, maxHull: diff.lives, shield: 0,
     weapon: 0, fireT: 0, empT: 0, inv: 2, od: 0, alive: true, tilt: 0 });
@@ -1428,7 +1488,7 @@ function loop(ts) {
   G.bgT += dt;
   if (G.state !== 'paused') updateBg(dt);
   if (G.state === 'playing') update(dt);
-  else if (G.state === 'over') { updateParts(dt); updateFloats(dt); }
+  else if (G.state === 'over') { updateParts(dt); updateFloats(dt); updateBreachFx(dt); }
   if (vigA > 0) { vigA = Math.max(0, vigA - 2.4 * dt); $('vig').style.opacity = vigA; }
   if (G.shakeAmp > 0) G.shakeAmp = Math.max(0, G.shakeAmp - 26 * dt);
   if (G.state === 'playing') updateHUD();
