@@ -86,7 +86,7 @@ Cukup sebuah browser modern (Chrome, Edge, Firefox, Safari — versi terakhir). 
 ```bash
 # unduh / clone repo, lalu buka filenya
 git clone https://github.com/USERNAME/ambi-dex.git
-cd ambidex
+cd ambi-dex
 # buka index.html dengan double-click
 ```
 
