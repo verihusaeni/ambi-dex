@@ -61,6 +61,7 @@ body.playing .btn,body.playing .abtn,body.playing .switch{cursor:pointer}
 #hWave{position:absolute;top:16px;left:50%;transform:translateX(-50%);text-align:center;max-width:60vw}
 #hWaveTxt{font-family:var(--disp);font-size:15px;letter-spacing:.35em;font-weight:700}
 #hWaveTxt.heat{color:var(--amber);text-shadow:0 0 12px rgba(255,176,77,.5)}
+#hPhaseTxt{font-size:9px;letter-spacing:.24em;color:var(--amber);margin-top:3px;opacity:.9}
 #hStormTxt{font-size:10px;letter-spacing:.22em;color:var(--dim);margin-top:4px}
 #hStormBar{width:160px;height:3px;background:rgba(87,246,200,.12);margin:5px auto 0}
 #hHint{position:absolute;bottom:19px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.26em;color:rgba(127,181,168,.5);white-space:nowrap}
@@ -264,6 +265,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
   </div>
   <div id="hWave">
     <div id="hWaveTxt">GELOMBANG 01</div>
+    <div id="hPhaseTxt">FASE KALIBRASI</div>
     <div id="hStormTxt">KEYSTORM DALAM 40s</div>
     <div id="hStormBar"><i id="hStormI"></i></div>
   </div>
@@ -336,7 +338,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
       <p>&#9656; Drone bergaris perisai hanya runtuh oleh <b>EMP</b>. Kristal kode tidak bisa ditembak — ketik semua kata di panel <b>UPLINK KODE</b> sebelum ia lolos ke bawah. Kata aktif ditandai putih.</p>
       <p>&#9656; Sesekali <b>KEYSTORM</b> meledak: ketik huruf yang muncul secepat mungkin untuk bonus besar dan perbaikan hull.</p>
       <p>&#9656; Musuh yang <b>lolos melewati garis pertahanan</b> di bawah layar memotong 1 hull — perhatikan kilat merah di garis. Beberapa musuh yang lolos bersamaan hanya dihitung sekali per detik.</p>
-      <p>&#9656; <b>Eskalasi gelombang:</b> semakin lama misi berjalan, musuh makin cepat, makin rapat, gerakannya makin liar, dan musuh kode membawa makin banyak kata — <b>2, 3, hingga 4 kata sekaligus</b>. Hancurkan dengan cepat sebelum gelombang memuncak!</p>
+      <p>&#9656; <b>Eskalasi bertahap</b> — setiap 2 gelombang, SATU aspek menguat lalu berganti: gel. 3–4 armada makin rapat &middot; 5–6 musuh <b>perisai</b> muncul (jumlahnya disesuaikan cooldown EMP Anda) &middot; 7–8 kode jadi <b>2 kata</b> &middot; 9–10 musuh <b>makin cepat</b> — lalu siklus berulang makin kuat.</p>
     </div>
     <div class="p-actions">
       <button class="btn primary" id="btnLaunch">LAUNCH &#9656;</button>
@@ -407,7 +409,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
 <script>
 'use strict';
 /* =====================================================================
-   AMBIDEX — Pelatih sinkronisasi mouse & keyboard (v1.4)
+   AMBIDEX — Pelatih sinkronisasi mouse & keyboard (v1.5)
    Arsitektur: state machine + canvas 2D + Web Audio (tanpa aset eksternal)
 
    Riwayat versi:
@@ -418,20 +420,19 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--mint
           footer kredit di halaman awal.
    v1.3 — Responsivitas penuh semua layar: jaring pengaman per-frame
           (enforceBounds), visualViewport, UI responsif, menu scrollable.
-   v1.4 — WAVE ESCALATION (eskalasi gelombang, berlaku SEMUA kesulitan):
-          • Kecepatan musuh naik signifikan per wave (dengan cap wajar)
-          • Amplitudo & frekuensi gerak sinus naik per wave — drone
-            mulai zigzag vertikal di wave 4+
-          • Interval spawn makin rapat (0.94^wave, min 0.35)
-          • Musuh kode (breaker) makin banyak: 1 → 2 → 3 → 4 → 5 aktif
-          • Breaker membawa MULTI-KATA: 1 → 2 → 3 → 4 kata sekaligus
-            (interval pertumbuhan per kesulitan: cadet 4 wave, pilot &
-            veteran 3 wave, ace 2 wave)
-          • Panel UPLINK & label kode di atas musuh mendukung multi-kata
-            (kata aktif putih, selesai mint, belum amber) + indikator
-            KATA n/N + auto-shrink agar selalu muat di layar
-          • Skor breaker memperhitungkan total huruf + bonus multi-kata
-          • Toast milestone saat batas baru tercapai
+   v1.4 — Multi-kata pada musuh kode + panel UPLINK multi-kata.
+   v1.5 — ESKALASI BERTAHAP (menggantikan eskalasi kontinu v1.4):
+          Siklus 8 gelombang — SATU aspek per fase, 2 gelombang per fase:
+            • Gel. 3–4   : FASE ARMADA    — kepadatan musuh naik (wajar)
+            • Gel. 5–6   : FASE PERISAI   — musuh shield muncul; jumlah
+              concurrent DISKALIBRASI dengan cooldown EMP pemain
+            • Gel. 7–8   : FASE KODE      — ketikan jadi 2 kata
+            • Gel. 9–10  : FASE VELOCITAS — kecepatan naik sedikit
+          Gel. 11–12 siklus berulang: armada +1 step, 13–14 perisai +1,
+          15–16 kode jadi 3 kata, 17–18 kecepatan +1, dst.
+          HANYA aspek fase aktif yang berubah — aspek lain konstan.
+          Wave 1–2 = FASE KALIBRASI (tanpa eskalasi apa pun).
+          Label fase tampil di HUD + toast pengumuman tiap pergantian fase.
    ===================================================================== */
 
 // ---------- UTIL ----------
@@ -449,13 +450,11 @@ const store = {
 };
 
 // ---------- PENGATURAN & KESULITAN ----------
-// wInt   : tiap berapa wave, breaker bertambah 1 kata
-// maxBrk : batas maksimum breaker aktif bersamaan (juga tumbuh per wave)
 const DIFFS = {
-  cadet:   { name:'KADET',     tag:'ANAK-ANAK · 6+',    desc:'Musuh lambat, kata 3–4 huruf, musuh tidak menembak, salah ketik diabaikan.', spd:.6,  spawn:1.7, word:[3,4], hp:.75, lives:5, shoot:false, empCd:3.5, storm:32, lenient:true,  wInt:4, maxBrk:3 },
-  pilot:   { name:'PILOT',     tag:'SANTAI · REMAJA',   desc:'Ritme sedang, kata 3–5 huruf, masih ramah untuk pemula.',                     spd:.85, spawn:1.2, word:[3,5], hp:1,   lives:4, shoot:false, empCd:5,   storm:40, lenient:true,  wInt:3, maxBrk:3 },
-  veteran: { name:'VETERAN',   tag:'DEWASA · STANDAR',  desc:'Musuh menembak, kata 4–7 huruf, salah ketik mengulang dari awal.',            spd:1.05,spawn:.95, word:[4,7], hp:1.2, lives:3, shoot:true,  empCd:6,   storm:46, lenient:false, wInt:3, maxBrk:4 },
-  ace:     { name:'ACE ELIT',  tag:'DEWASA · BRUTAL',   desc:'Serangan rapat, kata 5–9 huruf, refleks dan typing diuji tuntas.',            spd:1.3, spawn:.7,  word:[5,9], hp:1.45,lives:3, shoot:true,  empCd:7,   storm:52, lenient:false, wInt:2, maxBrk:5 }
+  cadet:   { name:'KADET',     tag:'ANAK-ANAK · 6+',    desc:'Musuh lambat, kata 3–4 huruf, musuh tidak menembak, salah ketik diabaikan.', spd:.6,  spawn:1.7, word:[3,4], hp:.75, lives:5, shoot:false, empCd:3.5, storm:32, lenient:true,  maxBrk:3 },
+  pilot:   { name:'PILOT',     tag:'SANTAI · REMAJA',   desc:'Ritme sedang, kata 3–5 huruf, masih ramah untuk pemula.',                     spd:.85, spawn:1.2, word:[3,5], hp:1,   lives:4, shoot:false, empCd:5,   storm:40, lenient:true,  maxBrk:3 },
+  veteran: { name:'VETERAN',   tag:'DEWASA · STANDAR',  desc:'Musuh menembak, kata 4–7 huruf, salah ketik mengulang dari awal.',            spd:1.05,spawn:.95, word:[4,7], hp:1.2, lives:3, shoot:true,  empCd:6,   storm:46, lenient:false, maxBrk:4 },
+  ace:     { name:'ACE ELIT',  tag:'DEWASA · BRUTAL',   desc:'Serangan rapat, kata 5–9 huruf, refleks dan typing diuji tuntas.',            spd:1.3, spawn:.7,  word:[5,9], hp:1.45,lives:3, shoot:true,  empCd:7,   storm:52, lenient:false, maxBrk:5 }
 };
 let settings = Object.assign({ diff:'pilot', music:.7, sfx:.9, shake:true, muteM:false, muteS:false }, store.get('settings', {}));
 store.set('settings', settings);
@@ -569,7 +568,6 @@ const SFX = {
     AU.noise({ d:.35, v:.2, f0:400, f1:3000, type:'bandpass', q:1 });
   },
   keyOK(n)   { AU.tone({ w:'square', f0: 520 * Math.pow(2, (n % 10) / 12), f1: 700 * Math.pow(2, (n % 10) / 12), d:.05, v:.11 }); },
-  // v1.4: suara khusus "satu kata selesai, lanjut kata berikutnya"
   wordDone() {
     AU.tone({ w:'square', f0:660, f1:990, d:.08, v:.13 });
     AU.tone({ w:'square', f0:990, f1:1320, d:.11, v:.12, at: AU.ready ? AU.ctx.currentTime + .07 : 0 });
@@ -588,6 +586,7 @@ const SFX = {
   uiTick()   { AU.tone({ w:'square', f0:1400, f1:900, d:.04, v:.07 }); },
   wave()     { AU.tone({ w:'triangle', f0:440, d:.1, v:.14 }); AU.tone({ w:'triangle', f0:660, d:.12, v:.14, at: AU.ready ? AU.ctx.currentTime + .1 : 0 }); AU.tone({ w:'triangle', f0:880, d:.18, v:.14, at: AU.ready ? AU.ctx.currentTime + .2 : 0 }); },
   stormGo()  { AU.noise({ d:.6, v:.26, f0:300, f1:2400, type:'bandpass', q:2 }); },
+  phaseUp()  { AU.tone({ w:'sawtooth', f0:180, f1:420, d:.3, v:.16 }); AU.tone({ w:'sine', f0:840, f1:840, d:.2, v:.12, at: AU.ready ? AU.ctx.currentTime + .25 : 0 }); },
   over() {
     if (!AU.ready) return;
     const t = AU.ctx.currentTime;
@@ -677,7 +676,7 @@ addEventListener('pointerdown', bootAudio, { once: true });
 addEventListener('keydown', bootAudio, { once: true });
 
 // ---------- STATE GLOBAL ----------
-const G = { state:'title', bgT:0, time:0, wave:1, waveT:0, score:0, combo:1, comboT:0, spawnT:1.2, stormT:40, shakeAmp:0, deadT:0, breachGraceT:0, lastWordCount:1, lastMaxBrk:1 };
+const G = { state:'title', bgT:0, time:0, wave:1, waveT:0, score:0, combo:1, comboT:0, spawnT:1.2, stormT:40, shakeAmp:0, deadT:0, breachGraceT:0 };
 const player = { x:0, y:0, hull:3, maxHull:3, shield:0, weapon:0, fireT:0, empT:0, inv:0, od:0, alive:false, tilt:0 };
 let enemies = [], bullets = [], ebullets = [], parts = [], floats = [], pups = [], breachMarks = [];
 let stats = { shots:0, hits:0, keys:0, keysErr:0, maxCombo:1, time:0 };
@@ -713,26 +712,65 @@ function pickWord() {
   for (let i = 0; i < a; i++) s += L[Math.floor(Math.random() * L.length)];
   return s;
 }
-
-// ---------- WAVE ESCALATION (v1.4) ----------
-// Jumlah kata per breaker pada wave tertentu — tumbuh berdasar `wInt` kesulitan,
-// cap 4 kata agar tetap bisa dimainkan manusia :)
-function wordCountForWave(w) {
-  return Math.min(4, 1 + Math.floor((w - 1) / diff.wInt));
-}
-// Dengan sedikit variasi: 35% peluang satu level di bawah puncak agar tidak monoton
-function breakerWordCount() {
-  const base = wordCountForWave(G.wave);
-  return (base > 1 && Math.random() < .35) ? base - 1 : base;
-}
-// Batas breaker aktif — tumbuh tiap 3 wave, dibatasi kesulitan
-function maxBreakersForWave(w) {
-  return Math.min(diff.maxBrk, 1 + Math.floor((w - 1) / 3));
-}
 function pickWords(n) {
   const arr = [];
   for (let i = 0; i < n; i++) arr.push(pickWord());
   return arr;
+}
+
+/* =====================================================================
+   ESKALASI BERTAHAP v1.5 — siklus 8 gelombang, 1 aspek per fase
+   ---------------------------------------------------------------------
+   gel. 1–2  : KALIBRASI (tenang)
+   gel. 3–4  : FASE ARMADA     — step spawn +1
+   gel. 5–6  : FASE PERISAI    — step shield +1 (diskalibrasi cooldown EMP)
+   gel. 7–8  : FASE KODE       — step kata +1 (2 kata, lalu 3, lalu 4)
+   gel. 9–10 : FASE VELOCITAS  — step speed +1
+   gel. 11–12: FASE ARMADA +1  ... dan seterusnya, berulang.
+   HANYA aspek fase aktif yang berubah; aspek lain tetap konstan.
+   ===================================================================== */
+const ESC_PHASES = ['ARMADA', 'PERISAI', 'KODE', 'VELOCITAS'];
+function escal(w) {
+  if (w <= 2) return { stage:-1, spawn:0, shield:0, wordIdx:0, speed:0 };
+  const seg = Math.floor((w - 3) / 2); // segmen 2-gelombang: 0,1,2,3,4,...
+  return {
+    stage:   seg % 4, // fase yang sedang aktif (0..3)
+    spawn:   Math.floor(seg / 4) + 1,                                          // step kepadatan
+    shield:  seg >= 1 ? Math.floor((seg - 1) / 4) + 1 : 0,                     // step perisai
+    wordIdx: seg >= 2 ? Math.min(3, Math.floor((seg - 2) / 4) + 1) : 0,        // 0=1 kata, 1=2 kata, 2=3, 3=4
+    speed:   seg >= 3 ? Math.floor((seg - 3) / 4) + 1 : 0                      // step kecepatan
+  };
+}
+// FASE ARMADA: interval spawn menyusut 14% per step (min 50%)
+function spawnFactorFor(w)  { const e = escal(w); return e.spawn  ? Math.max(.5, Math.pow(.86, e.spawn)) : 1; }
+// FASE VELOCITAS: +7% per step, maks +35% — "sedikit bertambah"
+function speedFactorFor(w)  { const e = escal(w); return 1 + Math.min(.35, e.speed * .07); }
+// FASE KODE: jumlah kata breaker (1 → 2 → 3 → 4, cap)
+function wordCountForWave(w){ const e = escal(w); return 1 + e.wordIdx; }
+// FASE PERISAI: jumlah tank concurrent DISKALIBRASI dengan cooldown EMP:
+// berapa perisai realistis bisa dipecah selama satu penyeberangan tank ke bawah.
+function maxTanksFor(w) {
+  const e = escal(w);
+  if (!e.shield) return 0; // sebelum fase perisai, tidak ada tank sama sekali
+  const cross = (H * .85) / (46 * diff.spd * speedFactorFor(w)); // detik tank menuruni layar
+  const byEmp = Math.max(1, Math.ceil(cross / diff.empCd));      // perisai yang bisa dipecah EMP
+  return Math.min(byEmp, 1 + e.shield);
+}
+function pTankFor(w) { const e = escal(w); return e.shield ? Math.min(.22, .06 + e.shield * .04) : 0; }
+// Breaker: peluang tumbuh perlahan, jumlah concurrent mengikuti fase KODE
+function pBrkFor(w)  { const e = escal(w); return Math.min(.22, .02 + w * .015 + e.wordIdx * .03); }
+function maxBrkFor(w){ const e = escal(w); return Math.min(diff.maxBrk, 1 + e.wordIdx); }
+
+// Pengumuman pergantian fase (dipanggil saat gelombang baru dimulai)
+function announcePhase(w) {
+  if (w < 3 || (w - 3) % 2 !== 0) return; // hanya di awal segmen (3,5,7,9,...)
+  const stage = Math.floor((w - 3) / 2) % 4;
+  const step  = Math.floor((w - 3) / 8) + 1;
+  if (stage === 0)      toast('FASE ARMADA — MUSUH MAKIN RAPAT \u00b7 TINGKAT ' + step, 'warn');
+  else if (stage === 1) toast('FASE PERISAI — SIAPKAN EMP [KLIK KANAN]', 'warn');
+  else if (stage === 2) toast('FASE KODE — ' + wordCountForWave(w) + ' KATA SEKALIGUS', 'warn');
+  else                  toast('FASE VELOCITAS — MUSUH MAKIN CEPAT \u00b7 TINGKAT ' + step, 'warn');
+  SFX.phaseUp();
 }
 
 // ---------- INPUT ----------
@@ -772,8 +810,6 @@ function getBreakerTarget() {
   for (const e of enemies) if (e.type === 'breaker' && e.shielded && e.words) { if (!t || e.y > t.y) t = e; }
   return t;
 }
-// v1.4: mengetik multi-kata — kata aktif harus diselesaikan dulu, lalu otomatis
-// pindah ke kata berikutnya. Salah ketik mengulang kata aktif (bukan semua kata).
 function breakerType(b, ch) {
   stats.keys++;
   const cur = b.words[b.wIdx];
@@ -830,25 +866,24 @@ function endStorm() {
     addScore(bonus);
     toast('BONUS KETIK +' + fmt(bonus));
   }
-  MUSIC.int = Math.min(1, (G.wave - 1) * .3);
+  MUSIC.int = Math.min(1, (G.wave - 1) * .15);
   G.stormT = diff.storm;
 }
 function updateStormDom() {
   $('stormBarI').style.transform = 'scaleX(' + clamp(storm.t / storm.dur, 0, 1) + ')';
 }
 
-// ---------- SPAWN MUSUH (v1.4: pakai kurva eskalasi wave) ----------
+// ---------- SPAWN MUSUH (v1.5: hanya aspek fase aktif yang berubah) ----------
 function spawnOne() {
-  const nBrk = enemies.reduce((a, e) => a + (e.type === 'breaker' ? 1 : 0), 0);
+  const w = G.wave, esc = escal(w);
+  const nBrk  = enemies.reduce((a, e) => a + (e.type === 'breaker' ? 1 : 0), 0);
   const nTank = enemies.reduce((a, e) => a + (e.type === 'tank' ? 1 : 0), 0);
-  const w = G.wave;
-  // ESKALASI: kecepatan naik 9% per wave (cap 2.6x dari baseline)
-  const spdM = diff.spd * (1 + Math.min(1.6, (w - 1) * .09));
-  const maxBrk = maxBreakersForWave(w);
-  // ESKALASI: peluang breaker naik per wave (cap 30%)
-  const pBrk = (w >= 2 && nBrk < maxBrk) ? Math.min(.3, .02 + w * .035) : 0;
-  const pTank = nTank < 3 ? Math.min(.16, .03 + w * .016) : 0;
-  const pSwm = Math.min(.3, .07 + w * .03);
+  const spdM  = diff.spd * speedFactorFor(w);
+  const maxBrk  = maxBrkFor(w);
+  const maxTank = maxTanksFor(w); // diskalibrasi cooldown EMP
+  const pBrk  = (w >= 2 && nBrk < maxBrk) ? pBrkFor(w) : 0;
+  const pTank = nTank < maxTank ? pTankFor(w) : 0;
+  const pSwm  = Math.min(.28, .06 + w * .02);
   const r = Math.random();
   let type = 'drone';
   if (r < pBrk) type = 'breaker';
@@ -856,14 +891,13 @@ function spawnOne() {
   else if (r < pBrk + pTank + pSwm) type = 'swarm';
   const m = Math.min(60, Math.max(24, W * .08));
   const e = { id:++eid, type, x: rand(m, Math.max(m + 1, W - m)), y:-46, t:0, phase:rand(0,TAU), stun:0, flash:0, errT:0,
-              shielded:false, words:null, wIdx:0, typed:0, shootT:rand(2,3.5), spd:100, r:16, cr:13, hp:2, score:100 };
+              shielded:false, words:null, wIdx:0, typed:0, shootT:rand(2.4,4), spd:100, r:16, cr:13, hp:2, score:100 };
   if (type === 'drone')       { e.spd = rand(70,100) * spdM;  e.r = 17; e.cr = 13; e.hp = Math.ceil(2 * diff.hp); e.score = 100; }
   else if (type === 'swarm')  { e.spd = rand(115,150) * spdM; e.r = 12; e.cr = 9;  e.hp = 1; e.score = 60; }
   else if (type === 'tank')   { e.spd = rand(36,50) * spdM;   e.r = 30; e.cr = 24; e.hp = Math.ceil(8 * diff.hp); e.score = 250; e.shielded = true; }
   else {
     e.spd = rand(44,58) * spdM; e.r = 22; e.cr = 17; e.hp = 2; e.score = 400; e.shielded = true;
-    // ESKALASI: breaker membawa 1–4 kata sesuai wave saat ini
-    e.words = pickWords(breakerWordCount());
+    e.words = pickWords(wordCountForWave(w)); // FASE KODE menentukan jumlah kata
   }
   enemies.push(e);
 }
@@ -933,7 +967,6 @@ function codeKill(e) {
   const i = enemies.indexOf(e); if (i >= 0) enemies.splice(i, 1);
   explosion(e.x, e.y, '#57f6c8', 30, true);
   SFX.boom(true); SFX.pickup(); shake(5);
-  // ESKALASI v1.4: skor memperhitungkan total huruf semua kata + bonus multi-kata
   const totalLetters = e.words.reduce((a, w) => a + w.length, 0);
   const sc = Math.round((400 + totalLetters * 25 + (e.words.length - 1) * 150) * G.combo);
   addScore(sc);
@@ -1045,29 +1078,20 @@ function update(dt) {
     player.fireT -= dt;
     if (mouse.down && player.fireT <= 0) fireWeapon();
   }
-  // gelombang + ESKALASI milestone
+  // gelombang + pengumuman fase eskalasi
   G.waveT += dt;
   if (G.waveT >= 24) {
     G.waveT = 0; G.wave++;
     SFX.wave(); toast('GELOMBANG ' + G.wave);
-    const wc = wordCountForWave(G.wave);
-    if (wc > G.lastWordCount) {
-      G.lastWordCount = wc;
-      toast('MUSUH KODE: ' + wc + ' KATA SEKALIGUS', 'warn');
-    }
-    const mb = maxBreakersForWave(G.wave);
-    if (mb > G.lastMaxBrk) {
-      G.lastMaxBrk = mb;
-      toast('ANCAMAN KODE MELIMPAH — MAKS ' + mb, 'warn');
-    }
-    MUSIC.int = Math.min(1, (G.wave - 1) * .3);
+    announcePhase(G.wave);
+    MUSIC.int = Math.min(1, (G.wave - 1) * .15);
   }
-  // spawn — ESKALASI: interval makin rapat per wave (min 0.35x)
+  // spawn — interval memakai faktor FASE ARMADA saja
   if (player.alive && !storm.active) {
     G.spawnT -= dt;
     if (G.spawnT <= 0) {
       spawnOne();
-      G.spawnT = diff.spawn * Math.max(.35, Math.pow(.94, G.wave - 1)) * rand(.7, 1.3);
+      G.spawnT = diff.spawn * spawnFactorFor(G.wave) * rand(.7, 1.3);
     }
   }
   if (!storm.active) { G.stormT -= dt; if (G.stormT <= 0 && player.alive) startStorm(); }
@@ -1085,14 +1109,10 @@ function update(dt) {
 }
 
 function updateEnemies(dt) {
-  const wv = G.wave;
-  // ESKALASI v1.4: gerakan makin liar seiring wave — amplitudo & frekuensi naik
-  const swayScale = 1 + Math.min(1.4, (wv - 1) * .12);           // amplitudo hingga 2.4x
-  const swaySw = Math.min(160, W * .16) * swayScale;              // swarm: goyangan lebar
-  const swayDr = Math.min(34, W * .06) * swayScale;               // drone: goyangan dasar
-  const homeBk = Math.min(70, W * .2);                            // breaker: homing
-  const drBob = wv >= 4 ? Math.min(20, (wv - 3) * 5) : 0;         // drone: zigzag vertikal mulai wave 4
-  const swarmFrq = 4.6 + Math.min(3.2, (wv - 1) * .14);           // swarm: kedip gerak makin cepat
+  // Gerakan adaptif lebar layar (TANPA eskalasi wave — gerak konstan per tipe)
+  const swaySw = Math.min(160, W * .16);
+  const swayDr = Math.min(34, W * .06);
+  const homeBk = Math.min(70, W * .2);
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     e.t += dt;
@@ -1100,22 +1120,16 @@ function updateEnemies(dt) {
     if (e.errT > 0) e.errT -= dt;
     if (e.stun > 0) e.stun -= dt;
     const slow = (storm.active ? .25 : 1) * (e.stun > 0 ? .15 : 1);
-    if (e.type === 'drone') {
-      e.y += e.spd * slow * dt;
-      e.x += Math.sin(e.t * 2 + e.phase) * swayDr * dt;
-      e.y += Math.sin(e.t * 2.6 + e.phase) * drBob * slow * dt;   // ESKALASI: bobbing vertikal
-    } else if (e.type === 'swarm') {
-      e.y += e.spd * 1.35 * slow * dt;
-      e.x += Math.sin(e.t * swarmFrq + e.phase) * swaySw * dt;    // ESKALASI: frekuensi naik
-    }
+    if (e.type === 'drone')      { e.y += e.spd * slow * dt; e.x += Math.sin(e.t * 2 + e.phase) * swayDr * dt; }
+    else if (e.type === 'swarm') { e.y += e.spd * 1.35 * slow * dt; e.x += Math.sin(e.t * 4.6 + e.phase) * swaySw * dt; }
     else if (e.type === 'tank')  { e.y += e.spd * slow * dt; }
     else { e.y += e.spd * .62 * slow * dt; e.x += clamp(player.x - e.x, -homeBk, homeBk) * dt * .9 * slow; }
     e.x = clampEX(e.x);
     if (diff.shoot && (e.type === 'drone' || e.type === 'swarm') && e.y > 10 && e.y < H * .72 && player.alive) {
       e.shootT -= dt * slow;
       if (e.shootT <= 0) {
-        e.shootT = rand(2.4, 4) / (1 + (G.wave - 1) * .06);
-        const a = Math.atan2(player.y - e.y, player.x - e.x), sp = 210 + G.wave * 8;
+        e.shootT = rand(2.4, 4);
+        const a = Math.atan2(player.y - e.y, player.x - e.x), sp = 220 * speedFactorFor(G.wave);
         ebullets.push({ x:e.x, y:e.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, r:4 });
         SFX.eshoot();
       }
@@ -1323,12 +1337,11 @@ function drawEnemy(e) {
     }
   }
   ctx.restore();
-  // v1.4: label MULTI-KATA di atas breaker — auto-shrink + clamp agar selalu muat
   if (e.type === 'breaker' && e.shielded && e.words) {
     const words = e.words;
     const txtLen = words.reduce((a, w) => a + w.length, 0) + (words.length - 1);
     let sp = 11;
-    if (txtLen * sp > W - 20) sp = Math.max(6, (W - 20) / txtLen); // ESKALASI: menyusut di layar sempit
+    if (txtLen * sp > W - 20) sp = Math.max(6, (W - 20) / txtLen);
     const half = (txtLen - 1) * sp / 2;
     const cx = safeX(e.x, half + 8);
     const y = Math.max(16, e.y - e.r - 14);
@@ -1343,7 +1356,7 @@ function drawEnemy(e) {
         else ctx.fillStyle = 'rgba(255,209,102,.55)';
         ctx.fillText(words[wi][li], px, y);
       }
-      ci++; // lewati posisi spasi antar kata
+      ci++;
     }
   }
 }
@@ -1465,7 +1478,7 @@ function drawFloats() {
   ctx.globalAlpha = 1;
 }
 
-// v1.4: panel UPLINK multi-kata — kata demi kata, gap antar kata, auto-shrink
+// Panel UPLINK multi-kata — auto-shrink, clamp, indikator kata aktif
 function drawCodePanel() {
   if (G.state !== 'playing' || !player.alive || storm.active) return;
   const b = getBreakerTarget(); if (!b) return;
@@ -1495,7 +1508,6 @@ function drawCodePanel() {
   ctx.fillStyle = 'rgba(5,18,16,.85)'; ctx.fill();
   ctx.strokeStyle = b.errT > 0 ? 'rgba(255,77,94,.9)' : 'rgba(87,246,200,.4)';
   ctx.lineWidth = 1.5; ctx.stroke();
-  // label + indikator progres kata
   const multi = words.length > 1;
   let label = 'UPLINK KODE' + (multi
     ? ' \u2014 KATA ' + (b.wIdx + 1) + '/' + words.length
@@ -1505,7 +1517,6 @@ function drawCodePanel() {
   ctx.font = '600 10px Rajdhani,sans-serif';
   if (ctx.measureText(label).width > bw - 24) label = multi ? 'KODE ' + (b.wIdx + 1) + '/' + words.length : 'UPLINK KODE';
   ctx.fillText(label, bx + 14, by + 16);
-  // huruf per kata; kata selesai mint, aktif putih + kursor, belum amber dim
   ctx.font = '700 ' + fs + 'px "Share Tech Mono",monospace';
   ctx.textAlign = 'center';
   const y0 = by + 41;
@@ -1578,9 +1589,16 @@ function updateHUD() {
   setBar('hHullI', player.hull / player.maxHull);
   setTxt('hHullT', player.hull + '/' + player.maxHull);
   setBar('hShieldI', player.shield / 3);
-  // ESKALASI: label gelombang menyala amber saat eskalasi kata sedang tinggi
-  const hot = wordCountForWave(G.wave) >= 3 || maxBreakersForWave(G.wave) >= 3;
   setTxt('hWaveTxt', 'GELOMBANG ' + String(G.wave).padStart(2, '0'));
+  // label fase eskalasi
+  let phaseTxt = 'FASE KALIBRASI';
+  if (G.wave >= 3) {
+    const ph = escal(G.wave).stage;
+    phaseTxt = 'FASE ' + ESC_PHASES[ph];
+    if (ph === 2) phaseTxt += ' \u00b7 ' + wordCountForWave(G.wave) + ' KATA';
+  }
+  setTxt('hPhaseTxt', phaseTxt);
+  const hot = wordCountForWave(G.wave) >= 3;
   if (hudCache.hot !== hot) {
     hudCache.hot = hot;
     $('hWaveTxt').classList.toggle('heat', hot);
@@ -1638,7 +1656,6 @@ function startGame() {
   G.wave = 1; G.waveT = 0; G.score = 0; G.combo = 1; G.comboT = 0;
   G.spawnT = 1.2; G.stormT = diff.storm; G.shakeAmp = 0; G.deadT = 0;
   G.breachGraceT = 0;
-  G.lastWordCount = 1; G.lastMaxBrk = 1; // ESKALASI: reset milestone
   storm.active = false; $('storm').classList.add('hidden');
   Object.assign(player, { x: W / 2, y: H - Math.min(160, H * .3), hull: diff.lives, maxHull: diff.lives, shield: 0,
     weapon: 0, fireT: 0, empT: 0, inv: 2, od: 0, alive: true, tilt: 0 });
